@@ -17,7 +17,6 @@ if (isset($_POST['login'])) {
         if (password_verify($password, $row['password'])) {
             $_SESSION['user_id'] = $row['id'];
             $_SESSION['user_name'] = $row['name'];
-
             header("Location: index.php");
             exit();
         } else {

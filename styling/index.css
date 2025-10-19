@@ -1,0 +1,91 @@
+ body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        .navbar-custom {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .dashboard-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        .table-wrapper {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .task-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            border: 1px solid #dee2e6;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .icon-box {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .icon-box-small {
+            width: 35px;
+            height: 35px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-add {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+        }
+        .btn-add:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(16, 185, 129, 0.4);
+        }
+        .btn-edit {
+            background-color: #fbbf24;
+            border: none;
+        }
+        .btn-edit:hover {
+            background-color: #f59e0b;
+        }
+        .btn-delete {
+            background-color: #ef4444;
+            border: none;
+        }
+        .btn-delete:hover {
+            background-color: #dc2626;
+        }
+        .status-badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+        .status-done {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        .status-pending {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        thead {
+            background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%);
+        }
+        .table > tbody > tr:hover {
+            background-color: #f9fafb;
+        }
