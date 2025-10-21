@@ -43,9 +43,24 @@ if (isset($_POST['add_task'])) {
     $task_name = trim($_POST['task_name']);
     $description = trim($_POST['description']);
     $image_path = null;
+    $errors = [];
 
-    // Image upload
-    if (!empty($_FILES['task_image']['name'])) {
+    // Validation checks
+    if (empty($task_name)) {
+        $errors[] = "Task Name Must!";
+    }
+    if (empty($description)) {
+        $errors[] = "Description Must!";
+    }
+
+    if (count($errors) > 0) {
+        echo "<div class='alert alert-danger'><ul>";
+        foreach ($errors as $err) {
+            echo "<li>$err</li>";
+        }
+        echo "</ul></div>";
+    } else {
+        // Image upload
         $target_dir = "uploads/";
         if (!is_dir($target_dir)) {
             mkdir($target_dir, 0777, true);
@@ -55,9 +70,7 @@ if (isset($_POST['add_task'])) {
         if (move_uploaded_file($_FILES["task_image"]["tmp_name"], $target_file)) {
             $image_path = $target_file;
         }
-    }
 
-    if (!empty($task_name)) {
         $stmt = $conn->prepare("INSERT INTO tasks (user_id, task_name, description, image) VALUES (?, ?, ?, ?)");
         $stmt->bind_param("isss", $user_id, $task_name, $description, $image_path);
         $stmt->execute();
@@ -65,8 +78,6 @@ if (isset($_POST['add_task'])) {
 
         header("Location: index.php"); 
         exit;
-    } else {
-        echo "<script>alert('Task name cannot be empty.');</script>";
     }
 }
 
@@ -223,7 +234,7 @@ if (isset($_POST['update_task'])) {
                         <button type="submit" name="add_task" class="btn btn-success">Add Task</button>
                     </div>
                 </div>
-            </form>
+            </form> 
         </div>
     </div>
 
