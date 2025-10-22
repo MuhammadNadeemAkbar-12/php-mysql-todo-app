@@ -4,9 +4,12 @@ include 'db_connect.php';
 
 $errorMsg = ''; 
 
+
+
+
 if (isset($_POST['login'])) {
     $email = trim($_POST['email']);
-    $password = $_POST['password'];
+    $password = $_POST['password'];    
     $errors = [];
 
     // Validation checks
@@ -28,15 +31,21 @@ if (isset($_POST['login'])) {
     } else {
         $sql = "SELECT * FROM users WHERE email = '$email'";
         $result = mysqli_query($conn, $sql);
-
-        if (mysqli_num_rows($result) === 1) {
-            $row = mysqli_fetch_assoc($result);
-
-            if (password_verify($password, $row['password'])) {
+        // print_r($result);
+        $row = mysqli_fetch_assoc($result);
+        if ($row) {
+             if (password_verify($password, $row['password'])) {
                 $_SESSION['user_id'] = $row['id'];
                 $_SESSION['user_name'] = $row['name'];
-                header("Location: index.php");
-                exit();
+                $_SESSION['user_role'] = $row['role'];
+ 
+                if($row['role'] == 'admin') {
+                   header("Location: admin-dashboard.php");
+                    exit;
+                }else{
+                    header("Location: index.php");
+                    exit;
+                }
             } else {
                 $errorMsg = "<p style='color:red; text-align:center;'>Incorrect password!</p>";
             }
@@ -166,6 +175,27 @@ if (isset($_POST['login'])) {
             background: rgba(101,72,255,0.08);
             color: #4a4b57;
         }
+        .auth-footer {
+            text-align: center;
+        }
+        .auth-footer .signup-link {
+            color: #5b3dff;
+            font-weight: 600;
+        }
+        .auth-footer .signup-link:hover {
+            text-decoration: underline;
+        }
+        .back-link {
+            color: #8b8c92;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.2s ease;
+        }
+        .back-link:hover {
+            color: #5b3dff;
+        }
         @media (max-width: 991.98px) {
             .gradient-panel {
                 padding: 3rem 2.5rem !important;
@@ -262,10 +292,16 @@ if (isset($_POST['login'])) {
                         <i class="fab fa-facebook-f me-2"></i>Facebook
                     </button>
                 </div>
-                <p class="text-center mt-4 mb-0 text-muted">
-                    Don't have an account?
-                    <a href="register.php" class="fw-semibold text-primary text-decoration-none">Sign up here</a>
-                </p>
+                <div class="auth-footer mt-4">
+                    <p class="mb-3 text-muted">
+                        Don't have an account?
+                        <a href="register.php" class="signup-link text-decoration-none">Sign up here</a>
+                    </p>
+                    <a href="landingPage.php" class="back-link">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Home
+                    </a>
+                </div>
             </div>
         </div>
     </div>
