@@ -193,6 +193,27 @@ if (isset($_POST['register'])) {
             font-size: 0.85rem;
             color: #8b8d97;
         }
+        .auth-footer {
+            text-align: center;
+        }
+        .auth-footer .login-link {
+            color: #7c53ff;
+            font-weight: 600;
+        }
+        .auth-footer .login-link:hover {
+            text-decoration: underline;
+        }
+        .back-link {
+            color: #8b8d97;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.2s ease;
+        }
+        .back-link:hover {
+            color: #7c53ff;
+        }
         @media (max-width: 991.98px) {
             .gradient-panel {
                 text-align: center;
@@ -294,10 +315,16 @@ if (isset($_POST['register'])) {
                         <i class="fab fa-facebook-f me-2"></i>Facebook
                     </button>
                 </div>
-                <p class="text-center text-muted mb-0">
-                    Already have an account?
-                    <a href="login.php" class="fw-semibold text-primary text-decoration-none">Log in here</a>
-                </p>
+                <div class="auth-footer">
+                    <p class="text-muted mb-3">
+                        Already have an account?
+                        <a href="login.php" class="login-link text-decoration-none">Log in here</a>
+                    </p>
+                    <a href="landingPage.php" class="back-link">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Home
+                    </a>
+                </div>
             </div>
         </div>
     </div>

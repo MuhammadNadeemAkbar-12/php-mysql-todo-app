@@ -13,7 +13,7 @@ $user_id = $_SESSION['user_id'];
 // Handle Logout
 if (isset($_GET['logout'])) {
     session_destroy();
-    header("Location: login.php");
+    header("Location: landingPage.php");
     exit;
 }
 
@@ -76,7 +76,7 @@ if (isset($_POST['add_task'])) {
         $stmt->execute();
         $stmt->close();
 
-        header("Location: index.php"); 
+        header("Location: index.php");
         exit;
     }
 }
@@ -105,10 +105,23 @@ if (isset($_POST['update_task'])) {
     }
 }
 
+
+$usersStatus = 'SELECT * FROM tasks';
+$userResult = mysqli_query($conn, $usersStatus);
+// if (mysqli_num_rows($userResult) > 0) {
+//     while ($row = mysqli_fetch_assoc($userResult)) {
+//         echo $row['status'], $row['user_id'];
+//     }
+// }
+
+
+
+
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -159,6 +172,7 @@ if (isset($_POST['update_task'])) {
                                 <th>Task Name</th>
                                 <th>Description</th>
                                 <th class="text-center">Actions</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -181,11 +195,22 @@ if (isset($_POST['update_task'])) {
                                             </a>
                                         </div>
                                     </td>
+                                    <td>
+                                        <?php if ($task['status'] == 'approved'): ?>
+                                            <span class="badge bg-success">Approved</span>
+                                        <?php elseif ($task['status'] == 'rejected'): ?>
+                                            <span class="badge bg-danger">Rejected</span>
+                                        <?php elseif ($task['status'] == 'blocked'): ?>
+                                            <span class="badge bg-dark">Blocked</span>
+                                        <?php else: ?>
+                                            <span class="badge bg-warning text-dark">Pending</span>
+                                        <?php endif; ?>
+                                    </td>
                                 </tr>
                             <?php endwhile; ?>
                         </tbody>
                     </table>
-                    
+
                 </div>
             <?php else: ?>
                 <div class="text-center py-5">
@@ -234,36 +259,36 @@ if (isset($_POST['update_task'])) {
                         <button type="submit" name="add_task" class="btn btn-success">Add Task</button>
                     </div>
                 </div>
-            </form> 
+            </form>
         </div>
     </div>
 
     <!-- Edit Task Modal -->
     <div class="modal fade" id="editTaskModal" tabindex="-1" aria-labelledby="editTaskModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <form method="POST" action="">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="editTaskModalLabel">Edit Task</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <input type="hidden" name="edit_id" id="edit_id">
-              <div class="mb-3">
-                <label class="form-label">Task Name</label>
-                <input type="text" name="edit_task_name" id="edit_task_name" class="form-control" required>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Description</label>
-                <textarea name="edit_description" id="edit_description" class="form-control" rows="3"></textarea>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="submit" name="update_task" class="btn btn-success">Save Changes</button>
-            </div>
-          </div>
-        </form>
-      </div>
+        <div class="modal-dialog">
+            <form method="POST" action="">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editTaskModalLabel">Edit Task</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="edit_id" id="edit_id">
+                        <div class="mb-3">
+                            <label class="form-label">Task Name</label>
+                            <input type="text" name="edit_task_name" id="edit_task_name" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="edit_description" id="edit_description" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" name="update_task" class="btn btn-success">Save Changes</button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -271,7 +296,7 @@ if (isset($_POST['update_task'])) {
     <script>
         const editTaskModal = document.getElementById('editTaskModal');
         if (editTaskModal) {
-            editTaskModal.addEventListener('show.bs.modal', function (event) {
+            editTaskModal.addEventListener('show.bs.modal', function(event) {
                 const button = event.relatedTarget;
                 document.getElementById('edit_id').value = button.getAttribute('data-id');
                 document.getElementById('edit_task_name').value = button.getAttribute('data-name');
@@ -281,6 +306,5 @@ if (isset($_POST['update_task'])) {
     </script>
 
 </body>
+
 </html>
-
-
