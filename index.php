@@ -87,24 +87,66 @@ $tasks_result = mysqli_query($conn, $tasks_sql);
 
 
 // Handle Update Task
+// if (isset($_POST['update_task'])) {
+//     $edit_id = intval($_POST['edit_id']);
+//     $edit_task_name = trim($_POST['edit_task_name']);
+//     $edit_description = trim($_POST['edit_description']);
+
+//     if (!empty($edit_task_name)) {
+//         $stmt = $conn->prepare("UPDATE tasks SET task_name = ?, description = ? WHERE id = ? AND user_id = ?");
+//         $stmt->bind_param("ssii", $edit_task_name, $edit_description, $edit_id, $user_id);
+//         $stmt->execute();
+//         $stmt->close();
+
+//         header("Location: index.php");
+//         exit;
+//     } else {
+//         echo "<script>alert('Task name cannot be empty.');</script>";
+//     }
+// }
+
+
 if (isset($_POST['update_task'])) {
+
     $edit_id = intval($_POST['edit_id']);
     $edit_task_name = trim($_POST['edit_task_name']);
     $edit_description = trim($_POST['edit_description']);
+    $image_path = null;
 
-    if (!empty($edit_task_name)) {
-        $stmt = $conn->prepare("UPDATE tasks SET task_name = ?, description = ? WHERE id = ? AND user_id = ?");
-        $stmt->bind_param("ssii", $edit_task_name, $edit_description, $edit_id, $user_id);
+    if (!empty($_FILES["edit_task_image"]["name"])) {
+        echo ("Hello inside");
+
+        $target_dir = "uploads/";
+        if (!is_dir($target_dir)) {
+            mkdir($target_dir, 0777, true);
+        }
+
+        $image_name = time() . '_' . basename($_FILES["edit_task_image"]["name"]);
+        $image_file = $target_dir . $image_name;
+
+        if (move_uploaded_file($_FILES["edit_task_image"]["tmp_name"], $image_file)) {
+            $image_path = $image_file;
+            echo ($image_path);
+        }
+
+        $stmt = $conn->prepare("UPDATE tasks SET task_name = ?, description = ?, image = ? WHERE id = ? AND user_id = ?");
+        $stmt->bind_param("sssii", $edit_task_name, $edit_description, $image_path, $edit_id, $user_id);
         $stmt->execute();
         $stmt->close();
-
         header("Location: index.php");
-        exit;
-    } else {
-        echo "<script>alert('Task name cannot be empty.');</script>";
     }
-}
 
+
+
+
+    $stmt = $conn->prepare("UPDATE tasks SET task_name = ?, description = ? WHERE id = ? AND user_id = ? ");
+    $stmt->bind_param("ssii", $edit_task_name, $edit_description, $edit_id, $user_id);
+
+    $stmt->execute();
+    $stmt->close();
+    header("Location: index.php");
+    exit;
+}
 
 $usersStatus = 'SELECT * FROM tasks';
 $userResult = mysqli_query($conn, $usersStatus);
@@ -125,7 +167,7 @@ $userResult = mysqli_query($conn, $usersStatus);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Task Manager</title>
+    <title>User Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="./styling/index.css">
@@ -266,7 +308,7 @@ $userResult = mysqli_query($conn, $usersStatus);
     <!-- Edit Task Modal -->
     <div class="modal fade" id="editTaskModal" tabindex="-1" aria-labelledby="editTaskModalLabel" aria-hidden="true">
         <div class="modal-dialog">
-            <form method="POST" action="">
+            <form method="POST" action="" enctype="multipart/form-data">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="editTaskModalLabel">Edit Task</h5>
@@ -281,6 +323,10 @@ $userResult = mysqli_query($conn, $usersStatus);
                         <div class="mb-3">
                             <label class="form-label">Description</label>
                             <textarea name="edit_description" id="edit_description" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Task Image</label>
+                            <input type="file" name="edit_task_image" class="form-control" accept="image/*">
                         </div>
                     </div>
                     <div class="modal-footer">
