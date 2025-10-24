@@ -41,7 +41,7 @@ if ($userResult && mysqli_num_rows($userResult) > 0) {
 
 if (isset($_POST['logout'])) {
     session_destroy();
-    header("Location: login.php");
+    header("Location: landingPage.php");
     exit;
 }
 
@@ -53,30 +53,51 @@ $result = mysqli_query($conn, $allUsers);
 // all Users 
 $fetchAllUsers = "SELECT COUNT(*) AS total_users from users where role = 'user'";
 $countedResult = mysqli_query($conn, $fetchAllUsers);
-if($countedResult){
-  $row =  mysqli_fetch_assoc($countedResult);
-  
+if ($countedResult) {
+    $row =  mysqli_fetch_assoc($countedResult);
 }
 
 // all task 
 $fetchAllTaskQuery = "SELECT COUNT(*) AS total_task FROM tasks";
 $queryResult = mysqli_query($conn, $fetchAllTaskQuery);
 
-if($queryResult){
+if ($queryResult) {
     $Taskrow = mysqli_fetch_assoc($queryResult);
-
 }
 
 
 // all pending task 
-
 $fetchAllPendingQuery = "SELECT COUNT(*) AS pending_task FROM tasks WHERE status = 'pending'";
 $pendingQueryResulty = mysqli_query($conn, $fetchAllPendingQuery);
 
-if($pendingQueryResulty){
+if ($pendingQueryResulty) {
     $Pendingrow = mysqli_fetch_assoc($pendingQueryResulty);
-
 }
+
+// all approve task 
+$fetchAllApproveQuery = "SELECT COUNT(*) AS approve_task FROM tasks WHERE status = 'approved'";
+$approveQueryResulty = mysqli_query($conn, $fetchAllApproveQuery);
+
+if ($approveQueryResulty) {
+    $Approverow = mysqli_fetch_assoc($approveQueryResulty);
+}
+
+// all rejected task 
+$fetchAllRejectedQuery = "SELECT COUNT(*) AS rejected_task FROM tasks WHERE status = 'rejected'";
+$rejectedueryResulty = mysqli_query($conn, $fetchAllRejectedQuery);
+
+if ($rejectedueryResulty) {
+    $Recjectedrow = mysqli_fetch_assoc($rejectedueryResulty);
+}
+
+
+$fetchAllBlockedQuery = "SELECT COUNT(*) AS blcoked_task FROM tasks WHERE status = 'blcoked'";
+$blocledqueryResulty = mysqli_query($conn, $fetchAllBlockedQuery);
+
+if ($blocledqueryResulty) {
+    $Blockedrow = mysqli_fetch_assoc($blocledqueryResulty);
+}
+
 
 
 
@@ -89,7 +110,7 @@ if($pendingQueryResulty){
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Task Management System</title>
+    <title>Admin Dashboard</title>
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -101,6 +122,7 @@ if($pendingQueryResulty){
         .sidebar-menu .sidebar-logout-form {
             margin: 0;
         }
+
         .sidebar-menu .sidebar-menu-item {
             display: flex;
             align-items: center;
@@ -113,6 +135,7 @@ if($pendingQueryResulty){
             font-size: 16px;
             text-align: left;
         }
+
         .sidebar-menu .sidebar-menu-item:hover,
         .sidebar-menu .sidebar-menu-item:focus {
             background: rgba(255, 255, 255, 0.08);
@@ -153,7 +176,7 @@ if($pendingQueryResulty){
         <div class="admin-profile">
             <div>
                 <div class="admin-name">Admin Panel</div>
-                <?php echo htmlspecialchars($user_name, ENT_QUOTES, 'UTF-8'); ?>
+              <b>Welcome,  <?php echo htmlspecialchars($user_name, ENT_QUOTES, 'UTF-8'); ?></b> 
             </div>
             <img src="https://ui-avatars.com/api/?name=Admin&background=667eea&color=fff&size=128" alt="Admin">
         </div>
@@ -183,7 +206,7 @@ if($pendingQueryResulty){
                     <i class="fas fa-tasks"></i>
                 </div>
                 <div class="stat-card-title">Total Tasks</div>
-                <div class="stat-card-value"><?php echo $Taskrow['total_task']?></div>
+                <div class="stat-card-value"><?php echo $Taskrow['total_task'] ?></div>
             </div>
 
             <div class="stat-card orange">
@@ -192,6 +215,27 @@ if($pendingQueryResulty){
                 </div>
                 <div class="stat-card-title">Pending Approvals</div>
                 <div class="stat-card-value"><?php echo $Pendingrow['pending_task'] ?> </div>
+            </div>
+            <div class="stat-card orange">
+                <div class="stat-card-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-card-title">Approve</div>
+                <div class="stat-card-value"><?php echo $Approverow['approve_task'] ?> </div>
+            </div>
+            <div class="stat-card orange">
+                <div class="stat-card-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-card-title">Rejected</div>
+                <div class="stat-card-value"><?php echo $Recjectedrow['rejected_task'] ?> </div>
+            </div>
+            <div class="stat-card orange">
+                <div class="stat-card-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-card-title">Blocked</div>
+                <div class="stat-card-value"><?php echo $Blockedrow['blcoked_task'] ?> </div>
             </div>
         </div>
 
@@ -206,8 +250,8 @@ if($pendingQueryResulty){
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th>Unique ID</th>
-                                <th>User ID</th>
+                                <th>ID</th>
+                                <!-- <th>User ID</th> -->
                                 <th>User Name</th>
                                 <th>Task Description</th>
                                 <th>Image</th>
@@ -221,9 +265,9 @@ if($pendingQueryResulty){
                             <?php while ($task = mysqli_fetch_assoc($result)):; ?>
 
                                 <tr>
-                                    
+
                                     <td><?php echo htmlspecialchars($task['id']); ?></td>
-                                    <td><?php echo htmlspecialchars($task['user_id']); ?></td>
+                                    <!-- <td><?php echo htmlspecialchars($task['user_id']); ?></td> -->
                                     <td><?php echo htmlspecialchars($task['task_name']); ?></td>
                                     <td><?php echo htmlspecialchars($task['description']); ?></td>
                                     <td>
@@ -244,20 +288,18 @@ if($pendingQueryResulty){
                                             <input type="hidden" name="task_id" value="<?= $task['id']; ?>">
                                             <button name="reject" class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Reject</button>
                                         </form>
+                                        
 
-                                        <form method="POST" style="display:inline;">
-                                            <input type="hidden" name="task_id" value="<?= $task['id']; ?>">
-                                            <button name="block" class="btn btn-dark btn-sm"><i class="fas fa-ban"></i> Block</button>
-                                        </form>
+
                                     </td>
-                                    
+
                                     <td>
                                         <?php if ($task['status'] == 'approved'): ?>
                                             <span class="badge bg-success">Approved</span>
                                         <?php elseif ($task['status'] == 'rejected'): ?>
                                             <span class="badge bg-danger">Rejected</span>
-                                        <?php elseif ($task['status'] == 'blocked'): ?>
-                                            <span class="badge bg-dark">Blocked</span>
+                                            
+
                                         <?php else: ?>
                                             <span class="badge bg-warning text-dark">Pending</span>
                                         <?php endif; ?>
@@ -269,6 +311,9 @@ if($pendingQueryResulty){
                         </tbody>
                     <?php endwhile; ?>
                     </table>
+
+
+                    
                 </div>
 
             <?php else: ?>
@@ -289,6 +334,13 @@ if($pendingQueryResulty){
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+    //    function confirmLogout () {
+    //     confirm("Are you sure to logout")
+    //    }
+
+    </script>
 
 </body>
 
