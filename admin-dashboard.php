@@ -41,7 +41,7 @@ if ($userResult && mysqli_num_rows($userResult) > 0) {
 
 if (isset($_POST['logout'])) {
     session_destroy();
-    header("Location: landingPage.php");
+    header("Location: landingPage.php?logout=success");
     exit;
 }
 
@@ -336,10 +336,18 @@ if ($blocledqueryResulty) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-    //    function confirmLogout () {
-    //     confirm("Are you sure to logout")
-    //    }
+    document.addEventListener('DOMContentLoaded', () => {
+        const logoutForm = document.querySelector('.sidebar-logout-form');
+        if (!logoutForm) return;
 
+        logoutForm.addEventListener('submit', (event) => {
+            if (!confirm('Are you sure you want to logout?')) {
+                event.preventDefault();
+                return;
+            }
+
+        });
+    });
     </script>
 
 </body>

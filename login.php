@@ -61,7 +61,7 @@ if (isset($_POST['login'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login User</title>
+    <title>Login </title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="./styling/login.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -221,6 +221,7 @@ if (isset($_POST['login'])) {
                         <i class="fas fa-check fs-4"></i>
                     </div>
                     <h2 class="fw-bold mb-2">Task Manager</h2>
+                    
                     <h4 class="fw-semibold mb-4">Welcome Back!</h4>
                     <p class="mb-4 opacity-75">
                         Stay on top of your tasks, monitor progress, and keep your productivity high with your personal task hub.
