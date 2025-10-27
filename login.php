@@ -2,6 +2,7 @@
 session_start(); 
 include 'db_connect.php'; 
 
+
 $errorMsg = ''; 
 
 
@@ -43,7 +44,7 @@ if (isset($_POST['login'])) {
                    header("Location: admin-dashboard.php");
                     exit;
                 }else{
-                    header("Location: index.php");
+                    header("Location: homepage.php");
                     exit;
                 }
             } else {
@@ -298,7 +299,7 @@ if (isset($_POST['login'])) {
                         Don't have an account?
                         <a href="register.php" class="signup-link text-decoration-none">Sign up here</a>
                     </p>
-                    <a href="landingPage.php" class="back-link">
+                    <a href="homepage.php" class="back-link">
                         <i class="fas fa-arrow-left"></i>
                         Back to Home
                     </a>

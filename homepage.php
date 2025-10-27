@@ -6,11 +6,21 @@ $limit = 6;
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $limit;
 
+// for logout 
+if (isset($_GET['logout'])) {
+    session_destroy();
+    header("Location: homepage.php");
+    exit;
+}
+
+
 // Filtering logic
 $filter_data = '';
 if (isset($_POST['filter_button'])) {
     $filter_data = $_POST['filter_input'];
 }
+
+
 
 // Query build
 if (!empty($filter_data)) {
@@ -417,6 +427,29 @@ $totalPages = ceil($collectNumRows / $limit);
                 margin: 0.5rem 0;
             }
         }
+
+        .user-menu .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(102, 126, 234, 0.5);
+        }
+
+        .user-menu .dropdown-menu {
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            border: none;
+            padding: 0.5rem 0;
+        }
+
+        .user-menu .dropdown-item {
+            font-weight: 500;
+        }
+
+        .user-menu .dropdown-item:hover {
+            background: rgba(102, 126, 234, 0.08);
+        }
     </style>
 </head>
 
@@ -425,7 +458,7 @@ $totalPages = ceil($collectNumRows / $limit);
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container">
-            <a class="navbar-brand" href="landingPage.php">
+            <a class="navbar-brand" href="homepage.php">
                 <i class="fas fa-tasks"></i> TaskFlow
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -436,15 +469,34 @@ $totalPages = ceil($collectNumRows / $limit);
                     <li class="nav-item">
                         <a class="nav-link" href="#home">Home</a>
                     </li>
+                    <?php if (isset($_SESSION['user_id'])): ?>
+                        <li class="nav-item">
+                            <a class="nav-link" href="myposts.php">My Posts</a>
+                        </li>
+                    <?php endif; ?>
                     <li class="nav-item">
                         <a class="nav-link" href="#about">About</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link btn-login" href="login.php">Login</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link btn-register" href="register.php">Register</a>
-                    </li>
+
+                    <?php if (isset($_SESSION['user_id'])): ?>
+                        <li class="nav-item dropdown user-menu">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+
+                                <span class="fw-semibold"><?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="<?php echo ($_SESSION['user_role'] === 'admin') ? 'admin-dashboard.php' : 'index.php'; ?>">Dashboard</a></li>
+                                <li><a class="dropdown-item" href="homepage.php?logout=1">Logout</a></li>
+                            </ul>
+                        </li>
+                    <?php else: ?>
+                        <li class="nav-item">
+                            <a class="nav-link btn-login" href="login.php">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link btn-register" href="register.php">Register</a>
+                        </li>
+                    <?php endif; ?>
                 </ul>
             </div>
         </div>
@@ -518,7 +570,7 @@ $totalPages = ceil($collectNumRows / $limit);
                                 <li class="page-item <?php echo ($i == $page) ? 'active' : ''; ?>">
                                     <form method="POST" style="display:inline;">
                                         <input type="hidden" name="filter_input" value="<?php echo htmlspecialchars($filter_data); ?>">
-                                        <button type="submit" name="filter_button" class="page-link" formaction="landingPage.php?page=<?php echo $i; ?>"><?php echo $i; ?></button>
+                                        <button type="submit" name="filter_button" class="page-link" formaction="homepage.php?page=<?php echo $i; ?>"><?php echo $i; ?></button>
                                     </form>
                                 </li>
                             <?php } ?>
