@@ -1,6 +1,10 @@
 <?php
 session_start();
 include 'db_connect.php';
+include 'middleware.php';
+checkRole(['user']);
+
+$user_id = $_SESSION['user_id'];
 
 // Redirect if not logged in
 if (!isset($_SESSION['user_id'])) {
@@ -8,14 +12,21 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-$user_id = $_SESSION['user_id'];
-
 // Handle Logout
-if (isset($_GET['logout'])) {
+// if (isset($_GET['logout'])) {
+//     session_destroy();
+//     header("Location: homepage.php");
+//     exit;
+// }
+
+
+// for logout 
+if (isset($_POST['logout'])) {
     session_destroy();
-    header("Location: landingPage.php");
+    header("Location: homepage.php?logout=success");
     exit;
 }
+
 
 // Handle Task Delete
 if (isset($_GET['delete_id'])) {
@@ -171,6 +182,24 @@ $userResult = mysqli_query($conn, $usersStatus);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="./styling/index.css">
+    <style>
+        .logout-form {
+            margin: 0;
+        }
+
+        .logout-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logout-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.75rem;
+        }
+    </style>
 </head>
 
 <body>
@@ -186,9 +215,20 @@ $userResult = mysqli_query($conn, $usersStatus);
                         Welcome, <span class="text-primary fw-bold"><?php echo htmlspecialchars($user_name, ENT_QUOTES, 'UTF-8'); ?></span>
                     </span>
                 </div>
-                <a href="index.php?logout=true" class="btn btn-danger">
-                    <i class="fas fa-sign-out-alt me-2"></i>Logout
-                </a>
+                <div class="container-fluid d-flex-left justify-center align-items-center">
+                    <div class="logout-controls">
+                        <a href="homepage.php" class="btn btn-success">
+                            <i class="fas fa-sign-out-alt me-2"></i>Back To Homepage
+                        </a>
+
+                        <form action="" method="post" class="logout-form">
+                            <button type="submit" name="logout" class="btn btn-danger logout-btn">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
             </div>
         </nav>
 

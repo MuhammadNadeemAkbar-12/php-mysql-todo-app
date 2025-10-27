@@ -1,6 +1,8 @@
 <?php
 session_start();
 include 'db_connect.php';
+include 'middleware.php';
+checkRole(['admin']);
 
 $user_id = $_SESSION['user_id'];
 
@@ -10,7 +12,7 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-// forn status 
+// for status 
 if (isset($_POST['approve'])) {
     $task_id = $_POST['task_id'];
     mysqli_query($conn, "UPDATE tasks SET status = 'approved' WHERE id = '$task_id'");
@@ -30,18 +32,50 @@ if (isset($_POST['block'])) {
 $user_name_query = "SELECT role FROM users WHERE role = 'admin' LIMIT 1";
 $userResult = mysqli_query($conn, $user_name_query);
 
+$user_name = $_SESSION['user_name'] ?? 'Admin';
 if ($userResult && mysqli_num_rows($userResult) > 0) {
     $row = mysqli_fetch_assoc($userResult);
-    $user_name = $row['role'];
-    echo $user_name;
+    if (!empty($row['role'])) {
+        $user_name = ucfirst($row['role']);
+    }
 }
 
+if (isset($_POST['add_task'])) {
+    $taskName = trim($_POST['task_name'] ?? '');
+    $description = trim($_POST['description'] ?? '');
+    $imagePath = null;
+
+    if ($taskName !== '' && $description !== '') {
+        if (!empty($_FILES['task_image']['name'])) {
+            $uploadDir = 'uploads/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+
+            $imageName = time() . '_' . basename($_FILES['task_image']['name']);
+            $targetPath = $uploadDir . $imageName;
+
+            if (move_uploaded_file($_FILES['task_image']['tmp_name'], $targetPath)) {
+                $imagePath = $targetPath;
+            }
+        }
+
+        $stmt = mysqli_prepare($conn, "INSERT INTO tasks (user_id, task_name, description, image, status) VALUES (?, ?, ?, ?, 'approved')");
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, 'isss', $user_id, $taskName, $description, $imagePath);
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+            header("Location: admin-dashboard.php?created=1");
+            exit;
+        }
+    }
+}
 
 // $user_id = $_SESSION['user_id'];
 
 if (isset($_POST['logout'])) {
     session_destroy();
-    header("Location: landingPage.php?logout=success");
+    header("Location: homepage.php?logout=success");
     exit;
 }
 
@@ -90,7 +124,7 @@ if ($rejectedueryResulty) {
     $Recjectedrow = mysqli_fetch_assoc($rejectedueryResulty);
 }
 
-
+// all blocked task 
 $fetchAllBlockedQuery = "SELECT COUNT(*) AS blcoked_task FROM tasks WHERE status = 'blcoked'";
 $blocledqueryResulty = mysqli_query($conn, $fetchAllBlockedQuery);
 
@@ -174,9 +208,12 @@ if ($blocledqueryResulty) {
     <!-- Top Navbar -->
     <div class="top-navbar">
         <div class="admin-profile">
+            <a href="homepage.php" class="btn btn-success">
+                <i class="fas fa-sign-out-alt me-2"></i>Back To Homepage
+            </a>
             <div>
                 <div class="admin-name">Admin Panel</div>
-              <b>Welcome,  <?php echo htmlspecialchars($user_name, ENT_QUOTES, 'UTF-8'); ?></b> 
+                <b>Welcome, <?php echo htmlspecialchars($user_name, ENT_QUOTES, 'UTF-8'); ?></b>
             </div>
             <img src="https://ui-avatars.com/api/?name=Admin&background=667eea&color=fff&size=128" alt="Admin">
         </div>
@@ -243,6 +280,9 @@ if ($blocledqueryResulty) {
         <div class="table-section">
             <div class="table-header">
                 <h4><i class="fas fa-list me-2"></i>All Tasks Overview</h4>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+                    <i class="fas fa-plus me-2"></i>Create Task
+                </button>
             </div>
             <?php if (mysqli_num_rows($result) > 0) : ?>
 
@@ -257,6 +297,7 @@ if ($blocledqueryResulty) {
                                 <th>Image</th>
                                 <th>Action</th>
                                 <th>Status</th>
+                           
 
 
                             </tr>
@@ -288,7 +329,7 @@ if ($blocledqueryResulty) {
                                             <input type="hidden" name="task_id" value="<?= $task['id']; ?>">
                                             <button name="reject" class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Reject</button>
                                         </form>
-                                        
+
 
 
                                     </td>
@@ -298,7 +339,7 @@ if ($blocledqueryResulty) {
                                             <span class="badge bg-success">Approved</span>
                                         <?php elseif ($task['status'] == 'rejected'): ?>
                                             <span class="badge bg-danger">Rejected</span>
-                                            
+
 
                                         <?php else: ?>
                                             <span class="badge bg-warning text-dark">Pending</span>
@@ -306,14 +347,14 @@ if ($blocledqueryResulty) {
                                     </td>
 
 
-                                    </td>
+                                        </td>
                                 </tr>
                         </tbody>
                     <?php endwhile; ?>
                     </table>
 
 
-                    
+
                 </div>
 
             <?php else: ?>
@@ -332,22 +373,52 @@ if ($blocledqueryResulty) {
 
     </div>
 
+    <!-- Add Task Modal -->
+    <div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form method="POST" class="modal-content" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addTaskModalLabel">Create New Task</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="task_name" class="form-label">Task Title</label>
+                        <input type="text" class="form-control" id="task_name" name="task_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Task Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="task_image" class="form-label">Task Image (optional)</label>
+                        <input type="file" class="form-control" id="task_image" name="task_image" accept="image/*">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" name="add_task" class="btn btn-primary">Save Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const logoutForm = document.querySelector('.sidebar-logout-form');
-        if (!logoutForm) return;
+        document.addEventListener('DOMContentLoaded', () => {
+            const logoutForm = document.querySelector('.sidebar-logout-form');
+            if (!logoutForm) return;
 
-        logoutForm.addEventListener('submit', (event) => {
-            if (!confirm('Are you sure you want to logout?')) {
-                event.preventDefault();
-                return;
-            }
+            logoutForm.addEventListener('submit', (event) => {
+                if (!confirm('Are you sure you want to logout?')) {
+                    event.preventDefault();
+                    return;
+                }
 
+            });
         });
-    });
     </script>
 
 </body>

@@ -320,7 +320,7 @@ if (isset($_POST['register'])) {
                         Already have an account?
                         <a href="login.php" class="login-link text-decoration-none">Log in here</a>
                     </p>
-                    <a href="landingPage.php" class="back-link">
+                    <a href="homepage.php" class="back-link">
                         <i class="fas fa-arrow-left"></i>
                         Back to Home
                     </a>
