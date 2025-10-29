@@ -2,6 +2,8 @@
 session_start();
 include 'db_connect.php';
 
+$currentPage = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit;
@@ -474,10 +476,10 @@ $totalPages = ceil($collectNumRows / $limit);
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item">
-                        <a class="nav-link" href="homepage.php">Home</a>
+                        <a class="nav-link <?php echo ($currentPage === 'homepage.php') ? 'active' : ''; ?>" href="homepage.php">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#tasks">My Posts</a>
+                        <a class="nav-link <?php echo ($currentPage === 'myposts.php') ? 'active' : ''; ?>" href="#tasks">My Posts</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#about">About</a>
@@ -543,32 +545,102 @@ $totalPages = ceil($collectNumRows / $limit);
 
 
 
-                <div class="row">
+               <div class="row">
                     <?php while ($task = mysqli_fetch_assoc($queryRun)): ?>
                         <div class="col-lg-4 col-md-6">
+                            <a href="post_detail.php?id=<?php echo $task['id']; ?>" style="text-decoration: none; color: inherit;">
                             <div class="task-card">
                                 <?php if (!empty($task['image'])): ?>
                                     <div class="task-thumb">
                                         <img class="task-image" src="<?php echo htmlspecialchars($task['image']); ?>" alt="Task Image">
                                     </div>
                                 <?php else: ?>
-                                    <div class="task-thumb">
-                                        <span class="task-placeholder">No Image</span>
-                                    </div>
+                                    <div class="task-thumb"><span class="task-placeholder">No Image</span></div>
                                 <?php endif; ?>
+
                                 <div class="task-body">
-                                    <span class="task-badge"><?php echo htmlspecialchars($task['status']); ?></span>
+                                    <h5><?php echo htmlspecialchars($task['status']); ?></h5>
                                     <h5><?php echo htmlspecialchars($task['task_name']); ?></h5>
                                     <p><?php echo htmlspecialchars($task['description']); ?></p>
-                                    <div class="task-date">
-                                        <i class="far fa-calendar"></i>
-                                        <span><?php echo htmlspecialchars($task['created_at']); ?></span>
+                                    <div class="task-date"><i class="far fa-calendar"></i> <?php echo htmlspecialchars($task['created_at']); ?></div>
+
+                                    <!-- for likes  -->
+                                    <div class="like-action mt-2">
+                                        <?php
+                                            $task_id = $task['id'];
+                                            // Get total comments count for this task
+                                            $countQuery = "SELECT COUNT(*) AS total_likes FROM likes WHERE task_id = $task_id";
+                                            $countResult = mysqli_query($conn, $countQuery);
+                                            $countRow = mysqli_fetch_assoc($countResult);
+                                            $totalLikes = $countRow['total_likes'];
+                                            ?>
+
+                                        <button type="button"
+                                            class="btn btn-like"
+                                            data-task-id="<?php echo $task['id']; ?>">
+                                            <i class="fa-regular fa-heart"></i>
+                                            <span> Like</span>
+                                        </button>
+                                        <span class="like-count">
+                                            <?php echo $totalLikes; ?> Likes
+                                        </span>
+                                    </div>
+
+                                    <!-- Comments Section -->
+                                    <div class="comments-section mt-3">
+                                        <h6 class="fw-semibold mb-2">💬 Comments</h6>
+
+
+                                        <!-- Comment List -->
+                                        <div class="comment-list">
+                                            <?php
+                                            $task_id = $task['id'];
+                                            // Get total comments count for this task
+                                            $countQuery = "SELECT COUNT(*) AS total_comments FROM comments WHERE task_id = $task_id";
+                                            $countResult = mysqli_query($conn, $countQuery);
+                                            $countRow = mysqli_fetch_assoc($countResult);
+                                            $totalComments = $countRow['total_comments'];
+                                            ?>
+                                            <!-- Total Comments Badge -->
+                                            <div class="mb-2">
+                                                <span class="badge rounded-pill" style="background:#667eea;color:#fff;font-size:1rem;">
+                                                    <i class="fas fa-comment-dots"></i> <?php echo $totalComments; ?> Comments
+                                                </span>
+                                            </div>
+                                            <?php
+                                            $commentQuery = "SELECT c.comment_text, u.name, c.created_at FROM comments c JOIN users u ON c.user_id = u.id WHERE c.task_id = $task_id ORDER BY c.created_at DESC";
+                                            $commentRun = mysqli_query($conn, $commentQuery);
+                                            if (mysqli_num_rows($commentRun) > 0) {
+                                                while ($comment = mysqli_fetch_assoc($commentRun)) {
+                                                    echo '<div class="comment d-flex align-items-start mb-2" style="background:#fff;border-radius:10px;padding:0.75rem 1rem;box-shadow:0 2px 8px rgba(102,126,234,0.08);"> <div><span class="fw-semibold" style="color:#667eea;">' . htmlspecialchars($comment['name']) . '</span><span class="badge rounded-pill ms-2" style="background:#f1f5ff;color:#667eea;font-size:0.8rem;">' . date('d M, Y h:i A', strtotime($comment['created_at'])) . '</span><div style="margin-top:4px;color:#444;">' . htmlspecialchars($comment['comment_text']) . '</div></div></div>';
+                                                }
+                                            } else {
+                                                echo '<p class="text-muted small">No comments yet. Be the first to comment!</p>';
+                                            }
+
+                                            ?>
+                                        </div>
+
+                                        <!-- Add Comment -->
+                                        <?php if (isset($_SESSION['user_id'])): ?>
+                                            <form method="POST" class="add-comment mt-3" action="">
+                                                <input type="hidden" name="task_id" value="<?php echo $task['id']; ?>">
+                                                <div class="input-group">
+                                                    <input type="text" name="comment_text" class="form-control" placeholder="Write a comment..." required>
+                                                    <button class="btn btn-outline-primary" type="submit" name="add_comment"><i class="fas fa-paper-plane"></i></button>
+                                                </div>
+                                            </form>
+                                        <?php else: ?>
+                                            <p class="text-muted small mt-2">🔒 <a href="login.php">Login</a> to add a comment.</p>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
+
+
                             </div>
+                            </a>
                         </div>
                     <?php endwhile; ?>
-
                 </div>
 
                 <!-- Pagination Frontend -->

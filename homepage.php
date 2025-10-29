@@ -2,6 +2,22 @@
 session_start();
 include 'db_connect.php';
 
+$currentPage = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+
+// Comment Insert Logic
+if (isset($_POST['add_comment']) && isset($_SESSION['user_id'])) {
+    $task_id = $_POST['task_id'];
+    $user_id = $_SESSION['user_id'];
+    $comment_text = mysqli_real_escape_string($conn, $_POST['comment_text']);
+
+    $insertQuery = "INSERT INTO comments (task_id, user_id, comment_text) VALUES ('$task_id', '$user_id', '$comment_text')";
+    mysqli_query($conn, $insertQuery);
+
+    // Page reload to show new comment
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit();
+}
+
 $limit = 6;
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $limit;
@@ -13,34 +29,28 @@ if (isset($_GET['logout'])) {
     exit;
 }
 
-
 // Filtering logic
 $filter_data = '';
 if (isset($_POST['filter_button'])) {
     $filter_data = $_POST['filter_input'];
 }
 
-
-
 // Query build
 if (!empty($filter_data)) {
-    // Filtered query
     $approvedQuery = "SELECT * FROM tasks WHERE status = 'approved' AND CONCAT(task_name, description) LIKE '%$filter_data%' LIMIT $limit OFFSET $offset";
     $countQuery = "SELECT COUNT(*) as total FROM tasks WHERE status = 'approved' AND CONCAT(task_name, description) LIKE '%$filter_data%'";
 } else {
-    // Normal query
     $approvedQuery = "SELECT * FROM tasks WHERE status = 'approved' LIMIT $limit OFFSET $offset";
     $countQuery = "SELECT COUNT(*) as total FROM tasks WHERE status = 'approved'";
 }
 
 $queryRun = mysqli_query($conn, $approvedQuery);
-
-// Pagination count
 $result = mysqli_query($conn, $countQuery);
 $row = mysqli_fetch_assoc($result);
 $collectNumRows = $row['total'];
 $totalPages = ceil($collectNumRows / $limit);
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -52,11 +62,8 @@ $totalPages = ceil($collectNumRows / $limit);
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Google Fonts - Poppins -->
+    <!-- Google Fonts + Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
@@ -102,6 +109,25 @@ $totalPages = ceil($collectNumRows / $limit);
             color: #4A90E2;
         }
 
+        .btn {
+            transition: background-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+        }
+
+        .btn:focus-visible {
+            outline: 2px solid rgba(102, 126, 234, 0.45);
+            outline-offset: 4px;
+        }
+
         .btn-login {
             color: #4A90E2;
             border: 2px solid #4A90E2;
@@ -113,6 +139,7 @@ $totalPages = ceil($collectNumRows / $limit);
         .btn-login:hover {
             background: #4A90E2;
             color: white;
+            box-shadow: 0 12px 26px rgba(74, 144, 226, 0.35);
         }
 
         .btn-register {
@@ -122,12 +149,46 @@ $totalPages = ceil($collectNumRows / $limit);
             border-radius: 25px;
             margin-left: 0.5rem;
             transition: all 0.3s ease;
+            box-shadow: 0 10px 22px rgba(74, 144, 226, 0.32);
         }
 
         .btn-register:hover {
             background: #357ABD;
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
+            box-shadow: 0 14px 30px rgba(74, 144, 226, 0.4);
+        }
+
+        .btn-cta {
+            background: white;
+            color: #667eea;
+            padding: 1rem 2.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border: none;
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.35);
+        }
+
+        .btn-cta:hover {
+            box-shadow: 0 18px 36px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-cta:active {
+            box-shadow: 0 10px 22px rgba(102, 126, 234, 0.28);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            box-shadow: 0 10px 24px rgba(118, 75, 162, 0.25);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5b70dd, #6b4295);
+        }
+
+        .btn-primary:active {
+            background: linear-gradient(135deg, #4d63c7, #5d3883);
         }
 
         /* Hero Section */
@@ -173,24 +234,6 @@ $totalPages = ceil($collectNumRows / $limit);
             max-width: 600px;
         }
 
-        .btn-cta {
-            background: white;
-            color: #667eea;
-            padding: 1rem 2.5rem;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 1.1rem;
-            border: none;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            transition: all 0.3s ease;
-        }
-
-        .btn-cta:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
-            color: #667eea;
-        }
-
         /* Approved Tasks Section */
         .tasks-section {
             padding: 80px 0;
@@ -225,6 +268,14 @@ $totalPages = ceil($collectNumRows / $limit);
             flex-direction: column;
             gap: 1.25rem;
             overflow: hidden;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .task-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 35px rgba(74, 144, 226, 0.2);
         }
 
         .task-card::after {
@@ -281,6 +332,44 @@ $totalPages = ceil($collectNumRows / $limit);
 
         .task-date i {
             margin-right: 0.5rem;
+        }
+
+        .like-action {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+        }
+
+        .btn-like {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            border-radius: 999px;
+            border: 1px solid rgba(102, 126, 234, 0.4);
+            background: #fff;
+            color: #667eea;
+            padding: 0.4rem 1rem;
+            font-weight: 600;
+        }
+
+        .btn-like:hover {
+            background: rgba(102, 126, 234, 0.08);
+        }
+
+        .btn-like.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .like-count {
+            background: rgba(102, 126, 234, 0.12);
+            color: #4A4A68;
+            padding: 0.35rem 0.75rem;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.9rem;
         }
 
         /* About Section */
@@ -390,6 +479,41 @@ $totalPages = ceil($collectNumRows / $limit);
             box-shadow: none;
         }
 
+
+        /* comments  */
+        .comments-section {
+            background: #f9f9ff;
+            border-radius: 10px;
+            padding: 1rem;
+            box-shadow: inset 0 1px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .comment-list {
+            max-height: 150px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+
+        .comment {
+            background: white;
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .comment strong {
+            color: #4A90E2;
+            margin-right: 5px;
+        }
+
+        .comment-list .comment:hover {
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.13);
+            background: #f6f8ff;
+            transition: box-shadow 0.2s, background 0.2s;
+        }
+
         /* Animations */
         @keyframes fadeInUp {
             from {
@@ -467,21 +591,17 @@ $totalPages = ceil($collectNumRows / $limit);
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item">
-                        <a class="nav-link" href="#home">Home</a>
+                        <a class="nav-link <?php echo ($currentPage === 'homepage.php') ? 'active' : ''; ?>" href="#home">Home</a>
                     </li>
                     <?php if (isset($_SESSION['user_id'])): ?>
                         <li class="nav-item">
-                            <a class="nav-link" href="myposts.php">My Posts</a>
+                            <a class="nav-link <?php echo ($currentPage === 'myposts.php') ? 'active' : ''; ?>" href="myposts.php">My Posts</a>
                         </li>
                     <?php endif; ?>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#about">About</a>
-                    </li>
-
+                    <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
                     <?php if (isset($_SESSION['user_id'])): ?>
                         <li class="nav-item dropdown user-menu">
                             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
-
                                 <span class="fw-semibold"><?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
@@ -490,12 +610,8 @@ $totalPages = ceil($collectNumRows / $limit);
                             </ul>
                         </li>
                     <?php else: ?>
-                        <li class="nav-item">
-                            <a class="nav-link btn-login" href="login.php">Login</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link btn-register" href="register.php">Register</a>
-                        </li>
+                        <li class="nav-item"><a class="nav-link btn-login" href="login.php">Login</a></li>
+                        <li class="nav-item"><a class="nav-link btn-register" href="register.php">Register</a></li>
                     <?php endif; ?>
                 </ul>
             </div>
@@ -508,62 +624,129 @@ $totalPages = ceil($collectNumRows / $limit);
             <div class="row align-items-center">
                 <div class="col-lg-6 hero-content">
                     <h1>Manage Your Tasks Easily</h1>
-                    <p>Stay organized and boost your productivity with our simple and intuitive task management system. Keep track of everything that matters, from daily to-dos to long-term projects.</p>
+                    <p>Stay organized and boost your productivity...</p>
                     <button class="btn btn-cta">Get Started</button>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Approved Tasks Section -->
+    <!-- Approved Tasks -->
     <?php if (mysqli_num_rows($queryRun) > 0): ?>
         <section class="tasks-section" id="tasks">
             <div class="container">
                 <h2 class="section-title">🌟 Trending Blog</h2>
-                <p class="section-subtitle">RDiscover the latest and most popular posts from our community! Here you’ll find recently completed and admin-approved tasks shared by our talented users — inspiring ideas, creative work, and real-world projects that stand out.</p>
 
-                <!-- Search/Filter Input (Frontend Only) -->
+                <!-- Filter -->
                 <form method="POST" class="row mb-4 justify-content-center" style="gap:10px;">
                     <div class="col-md-8 col-lg-6">
-                        <input type="text" name="filter_input" class="form-control form-control-lg" placeholder="Search/Filter Record" style="border-radius:8px;" value="<?php echo htmlspecialchars($filter_data); ?>">
+                        <input type="text" name="filter_input" class="form-control form-control-lg" placeholder="Search/Filter Record" value="<?php echo htmlspecialchars($filter_data); ?>">
                     </div>
                     <div class="col-auto">
-                        <button type="submit" class="btn btn-primary btn-lg" style="border-radius:8px;" name="filter_button">Filter Data</button>
+                        <button type="submit" class="btn btn-primary btn-lg" name="filter_button">Filter Data</button>
                     </div>
                 </form>
-
-
 
                 <div class="row">
                     <?php while ($task = mysqli_fetch_assoc($queryRun)): ?>
                         <div class="col-lg-4 col-md-6">
+                            <a href="post_detail.php?id=<?php echo $task['id']; ?>" style="text-decoration: none; color: inherit;">
                             <div class="task-card">
                                 <?php if (!empty($task['image'])): ?>
                                     <div class="task-thumb">
                                         <img class="task-image" src="<?php echo htmlspecialchars($task['image']); ?>" alt="Task Image">
                                     </div>
                                 <?php else: ?>
-                                    <div class="task-thumb">
-                                        <span class="task-placeholder">No Image</span>
-                                    </div>
+                                    <div class="task-thumb"><span class="task-placeholder">No Image</span></div>
                                 <?php endif; ?>
+
                                 <div class="task-body">
-                                    <span class="task-badge"><?php echo htmlspecialchars($task['status']); ?></span>
+                                    <h5><?php echo htmlspecialchars($task['status']); ?></h5>
                                     <h5><?php echo htmlspecialchars($task['task_name']); ?></h5>
                                     <p><?php echo htmlspecialchars($task['description']); ?></p>
-                                    <div class="task-date">
-                                        <i class="far fa-calendar"></i>
-                                        <span><?php echo htmlspecialchars($task['created_at']); ?></span>
+                                    <div class="task-date"><i class="far fa-calendar"></i> <?php echo htmlspecialchars($task['created_at']); ?></div>
+
+                                    <!-- for likes  -->
+                                    <div class="like-action mt-2">
+                                        <?php
+                                            $task_id = $task['id'];
+                                            // Get total comments count for this task
+                                            $countQuery = "SELECT COUNT(*) AS total_likes FROM likes WHERE task_id = $task_id";
+                                            $countResult = mysqli_query($conn, $countQuery);
+                                            $countRow = mysqli_fetch_assoc($countResult);
+                                            $totalLikes = $countRow['total_likes'];
+                                            ?>
+
+                                        <button type="button"
+                                            class="btn btn-like"
+                                            data-task-id="<?php echo $task['id']; ?>">
+                                            <i class="fa-regular fa-heart"></i>
+                                            <span> Like</span>
+                                        </button>
+                                        <span class="like-count">
+                                            <?php echo $totalLikes; ?> Likes
+                                        </span>
+                                    </div>
+
+                                    <!-- Comments Section -->
+                                    <div class="comments-section mt-3">
+                                        <h6 class="fw-semibold mb-2">💬 Comments</h6>
+
+
+                                        <!-- Comment List -->
+                                        <div class="comment-list">
+                                            <?php
+                                            $task_id = $task['id'];
+                                            // Get total comments count for this task
+                                            $countQuery = "SELECT COUNT(*) AS total_comments FROM comments WHERE task_id = $task_id";
+                                            $countResult = mysqli_query($conn, $countQuery);
+                                            $countRow = mysqli_fetch_assoc($countResult);
+                                            $totalComments = $countRow['total_comments'];
+                                            ?>
+                                            <!-- Total Comments Badge -->
+                                            <div class="mb-2">
+                                                <span class="badge rounded-pill" style="background:#667eea;color:#fff;font-size:1rem;">
+                                                    <i class="fas fa-comment-dots"></i> <?php echo $totalComments; ?> Comments
+                                                </span>
+                                            </div>
+                                            <?php
+                                            $commentQuery = "SELECT c.comment_text, u.name, c.created_at FROM comments c JOIN users u ON c.user_id = u.id WHERE c.task_id = $task_id ORDER BY c.created_at DESC";
+                                            $commentRun = mysqli_query($conn, $commentQuery);
+                                            if (mysqli_num_rows($commentRun) > 0) {
+                                                while ($comment = mysqli_fetch_assoc($commentRun)) {
+                                                    echo '<div class="comment d-flex align-items-start mb-2" style="background:#fff;border-radius:10px;padding:0.75rem 1rem;box-shadow:0 2px 8px rgba(102,126,234,0.08);"> <div><span class="fw-semibold" style="color:#667eea;">' . htmlspecialchars($comment['name']) . '</span><span class="badge rounded-pill ms-2" style="background:#f1f5ff;color:#667eea;font-size:0.8rem;">' . date('d M, Y h:i A', strtotime($comment['created_at'])) . '</span><div style="margin-top:4px;color:#444;">' . htmlspecialchars($comment['comment_text']) . '</div></div></div>';
+                                                }
+                                            } else {
+                                                echo '<p class="text-muted small">No comments yet. Be the first to comment!</p>';
+                                            }
+
+                                            ?>
+                                        </div>
+
+                                        <!-- Add Comment -->
+                                        <?php if (isset($_SESSION['user_id'])): ?>
+                                            <form method="POST" class="add-comment mt-3" action="">
+                                                <input type="hidden" name="task_id" value="<?php echo $task['id']; ?>">
+                                                <div class="input-group">
+                                                    <input type="text" name="comment_text" class="form-control" placeholder="Write a comment..." required>
+                                                    <button class="btn btn-outline-primary" type="submit" name="add_comment"><i class="fas fa-paper-plane"></i></button>
+                                                </div>
+                                            </form>
+                                        <?php else: ?>
+                                            <p class="text-muted small mt-2">🔒 <a href="login.php">Login</a> to add a comment.</p>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
+
+
                             </div>
+                            </a>
                         </div>
                     <?php endwhile; ?>
-
                 </div>
 
-                <!-- Pagination Frontend -->
-                <?php if ($totalPages): ?>
+                <!-- Pagination -->
+                <?php if ($totalPages > 1): ?>
                     <nav aria-label="Task Pagination">
                         <ul class="pagination pagination-modern justify-content-center mt-4">
                             <?php for ($i = 1; $i <= $totalPages; $i++) { ?>
@@ -576,13 +759,7 @@ $totalPages = ceil($collectNumRows / $limit);
                             <?php } ?>
                         </ul>
                     </nav>
-                <?php else: ?>
-                    <div class="task-thumb">
-                        <span class="task-placeholder">No Image</span>
-                    </div>
                 <?php endif; ?>
-
-
             </div>
         </section>
     <?php else: ?>
@@ -594,82 +771,15 @@ $totalPages = ceil($collectNumRows / $limit);
         </section>
     <?php endif; ?>
 
-    <!-- About Section -->
-    <section class="about-section" id="about">
-        <div class="container">
-            <h2 class="section-title">About TaskFlow</h2>
-            <p class="section-subtitle">Simple, powerful task management for everyone</p>
-
-            <div class="about-content">
-                <p>TaskFlow is a modern task management platform designed to help individuals and teams stay organized and productive. Our intuitive interface makes it easy to create, track, and complete tasks efficiently.</p>
-
-                <p>Whether you're managing personal projects or collaborating with a team, TaskFlow provides the tools you need to succeed. Our approval system ensures quality and accountability in every task.</p>
-
-                <ul class="feature-list">
-                    <li>
-                        <i class="fas fa-check-circle"></i>
-                        <span><strong>Easy Task Creation:</strong> Create and organize tasks with just a few clicks</span>
-                    </li>
-                    <li>
-                        <i class="fas fa-users"></i>
-                        <span><strong>Team Collaboration:</strong> Work together seamlessly with your team members</span>
-                    </li>
-                    <li>
-                        <i class="fas fa-shield-alt"></i>
-                        <span><strong>Approval System:</strong> Built-in approval workflow for quality assurance</span>
-                    </li>
-                    <li>
-                        <i class="fas fa-chart-line"></i>
-                        <span><strong>Progress Tracking:</strong> Monitor your productivity and track completion rates</span>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </section>
-
     <!-- Footer -->
     <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="social-icons">
-                    <a href="#"><i class="fab fa-facebook"></i></a>
-                    <a href="#"><i class="fab fa-twitter"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
-                    <a href="#"><i class="fab fa-linkedin"></i></a>
-                </div>
-                <p>&copy; 2025 TaskFlow. All rights reserved.</p>
-            </div>
+        <div class="container text-center">
+            <p>&copy; 2025 TaskFlow. All rights reserved.</p>
         </div>
     </footer>
 
-    <!-- Bootstrap 5 JS Bundle -->
+    <!-- JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
-
-    <script>
-        // Smooth scrolling for navigation links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
-
-        // Navbar background on scroll
-        window.addEventListener('scroll', function() {
-            const navbar = document.querySelector('.navbar');
-            if (window.scrollY > 50) {
-                navbar.style.background = 'rgba(255, 255, 255, 1)';
-            } else {
-                navbar.style.background = 'rgba(255, 255, 255, 0.98)';
-            }
-        });
-    </script>
 
 </body>
 
