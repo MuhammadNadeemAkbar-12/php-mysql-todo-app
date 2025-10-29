@@ -134,8 +134,6 @@ if ($blocledqueryResulty) {
 
 
 
-
-
 ?>
 
 <!DOCTYPE html>
@@ -175,6 +173,58 @@ if ($blocledqueryResulty) {
             background: rgba(255, 255, 255, 0.08);
             outline: none;
         }
+
+        .btn {
+            transition: background-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+        }
+
+        .btn:focus-visible {
+            outline: 2px solid rgba(102, 126, 234, 0.45);
+            outline-offset: 4px;
+        }
+
+        .btn-success {
+            box-shadow: 0 10px 24px rgba(46, 204, 113, 0.25);
+        }
+
+        .btn-success:hover {
+            background-color: #1e9d57;
+        }
+
+        .btn-outline-danger {
+            border-width: 2px;
+            box-shadow: 0 8px 20px rgba(231, 76, 60, 0.18);
+        }
+
+        .btn-outline-danger:hover {
+            color: #fff;
+            background-color: #e74c3c;
+            border-color: #e74c3c;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            box-shadow: 0 12px 28px rgba(118, 75, 162, 0.25);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5b70dd, #6b4295);
+        }
+
+        .btn-primary:active {
+            background: linear-gradient(135deg, #4d63c7, #5d3883);
+        }
     </style>
 </head>
 
@@ -195,13 +245,6 @@ if ($blocledqueryResulty) {
             <li><a href="#"><i class="fas fa-clock"></i> Pending Tasks</a></li>
             <li><a href="#"><i class="fas fa-check-circle"></i> Approved Tasks</a></li>
             <li><a href="#"><i class="fas fa-times-circle"></i> Rejected Tasks</a></li>
-            <li>
-                <form action="" method="post" class="sidebar-logout-form">
-                    <button type="submit" name="logout" class="sidebar-menu-item">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </button>
-                </form>
-            </li>
         </ul>
     </div>
 
@@ -211,6 +254,11 @@ if ($blocledqueryResulty) {
             <a href="homepage.php" class="btn btn-success">
                 <i class="fas fa-sign-out-alt me-2"></i>Back To Homepage
             </a>
+            <form action="" method="post" class="logout-form ms-2">
+                <button type="submit" name="logout" class="btn btn-outline-danger">
+                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                </button>
+            </form>
             <div>
                 <div class="admin-name">Admin Panel</div>
                 <b>Welcome, <?php echo htmlspecialchars($user_name, ENT_QUOTES, 'UTF-8'); ?></b>
@@ -408,7 +456,7 @@ if ($blocledqueryResulty) {
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const logoutForm = document.querySelector('.sidebar-logout-form');
+            const logoutForm = document.querySelector('.logout-form');
             if (!logoutForm) return;
 
             logoutForm.addEventListener('submit', (event) => {
@@ -416,7 +464,6 @@ if ($blocledqueryResulty) {
                     event.preventDefault();
                     return;
                 }
-
             });
         });
     </script>

@@ -57,11 +57,23 @@ git clone https://github.com/<your-handle>/task_manager.git
 cd task_manager
 ```
 
-1. Import `database.sql` _(create one matching your schema)_ into MySQL.
-2. Update `db_connect.php` with your database credentials.
-3. Place the project inside your web root (e.g.,
-   `c:\xampp\htdocs\php\task_manager`).
-4. Ensure the `uploads/` directory is writable (`chmod 775 uploads` on Linux).
+### Quick Start
+
+1. Create a MySQL database named `task_manager` (or adjust the config to your
+   preferred name).
+2. Import `database.sql` to provision tables and seed any starter data.
+3. Update `db_connect.php` with the correct database credentials and optional
+   base URL.
+4. Start Apache and MySQL from your XAMPP/LAMP control panel.
+5. Visit `http://localhost/task_manager` to confirm the dashboard loads without
+   errors.
+
+### Running Locally
+
+- Place the project inside your web root (e.g., `htdocs/` for XAMPP).
+- Ensure the `uploads/` directory exists and is writable (`chmod 775 uploads` on
+  Linux).
+- Restart Apache whenever you change PHP extensions or configuration values.
 
 ---
 
