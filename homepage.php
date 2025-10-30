@@ -4,19 +4,7 @@ include 'db_connect.php';
 
 $currentPage = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
 
-// Comment Insert Logic
-if (isset($_POST['add_comment']) && isset($_SESSION['user_id'])) {
-    $task_id = $_POST['task_id'];
-    $user_id = $_SESSION['user_id'];
-    $comment_text = mysqli_real_escape_string($conn, $_POST['comment_text']);
 
-    $insertQuery = "INSERT INTO comments (task_id, user_id, comment_text) VALUES ('$task_id', '$user_id', '$comment_text')";
-    mysqli_query($conn, $insertQuery);
-
-    // Page reload to show new comment
-    header("Location: " . $_SERVER['PHP_SELF']);
-    exit();
-}
 
 $limit = 6;
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
@@ -234,6 +222,137 @@ $totalPages = ceil($collectNumRows / $limit);
             max-width: 600px;
         }
 
+        /* Hero Illustration */
+        .hero-illustration {
+            position: relative;
+            z-index: 2;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .hero-icon-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .hero-icon-item {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .hero-icon-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .hero-icon-item i {
+            font-size: 3rem;
+            color: white;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .hero-icon-item span {
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: block;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        /* Features Section */
+        .features-section {
+            padding: 80px 0;
+            background: white;
+        }
+
+        .feature-card {
+            text-align: center;
+            padding: 2.5rem 2rem;
+            border-radius: 15px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.2);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .feature-icon i {
+            font-size: 2.5rem;
+            color: white;
+        }
+
+        .feature-card h4 {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card p {
+            color: #666;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* Stats Section */
+        .stats-section {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 60px 0;
+            color: white;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+
+        .stat-number {
+            font-size: 3.5rem;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
         /* Approved Tasks Section */
         .tasks-section {
             padding: 80px 0;
@@ -322,6 +441,15 @@ $totalPages = ceil($collectNumRows / $limit);
             z-index: 1;
         }
 
+        .task-description {
+            color: #555;
+            line-height: 1.6;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
         .task-date {
             color: #999;
             font-size: 0.9rem;
@@ -370,6 +498,65 @@ $totalPages = ceil($collectNumRows / $limit);
             border-radius: 999px;
             font-weight: 600;
             font-size: 0.9rem;
+        }
+
+        .card-cta {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.08));
+            border-radius: 10px;
+            text-align: center;
+            color: #667eea;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border: 1px dashed rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .card-cta i {
+            font-size: 1rem;
+            animation: bounceHorizontal 1.5s ease-in-out infinite;
+        }
+
+        .task-card:hover .card-cta {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
+            border-color: rgba(102, 126, 234, 0.5);
+        }
+
+        .your-post-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .your-post-badge i {
+            font-size: 0.85rem;
+        }
+
+        @keyframes bounceHorizontal {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            50% {
+                transform: translateX(5px);
+            }
         }
 
         /* About Section */
@@ -425,24 +612,36 @@ $totalPages = ceil($collectNumRows / $limit);
         }
 
         .social-icons {
-            margin: 2rem 0;
+            margin: 1.5rem 0;
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
         }
 
         .social-icons a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
             color: white;
-            font-size: 1.5rem;
-            margin: 0 1rem;
+            font-size: 1.2rem;
             transition: all 0.3s ease;
+            text-decoration: none;
         }
 
         .social-icons a:hover {
-            color: #4A90E2;
-            transform: translateY(-3px);
+            background: #4A90E2;
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(74, 144, 226, 0.4);
         }
 
         .footer p {
             margin: 0;
             color: rgba(255, 255, 255, 0.7);
+            font-size: 0.95rem;
         }
 
         /* pagination  */
@@ -620,16 +819,46 @@ $totalPages = ceil($collectNumRows / $limit);
 
     <!-- Hero Section -->
     <section class="hero-section" id="home">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-6 hero-content">
-                    <h1>Manage Your Tasks Easily</h1>
-                    <p>Stay organized and boost your productivity...</p>
-                    <button class="btn btn-cta">Get Started</button>
-                </div>
-            </div>
-        </div>
-    </section>
+	<div class="container">
+		<div class="row align-items-center">
+			<div class="col-lg-6 hero-content">
+				<h1>Manage Your Tasks Easily</h1>
+				<p>Stay organized and boost your productivity with our intuitive task management platform. Track, manage, and complete tasks efficiently.</p>
+				<button class="btn btn-cta" onclick="document.getElementById('tasks').scrollIntoView({behavior: 'smooth'})">
+					<i class="fas fa-rocket me-2"></i>Get Started
+				</button>
+			</div>
+			<div class="col-lg-6 hero-illustration">
+				<div class="hero-icon-grid">
+					<div class="hero-icon-item">
+						<i class="fas fa-clipboard-list"></i>
+						<span>Organize</span>
+					</div>
+					<div class="hero-icon-item">
+						<i class="fas fa-check-circle"></i>
+						<span>Complete</span>
+					</div>
+					<div class="hero-icon-item">
+						<i class="fas fa-users"></i>
+						<span>Collaborate</span>
+					</div>
+					<div class="hero-icon-item">
+						<i class="fas fa-chart-line"></i>
+						<span>Track</span>
+					</div>
+					<div class="hero-icon-item">
+						<i class="fas fa-bell"></i>
+						<span>Notify</span>
+					</div>
+					<div class="hero-icon-item">
+						<i class="fas fa-trophy"></i>
+						<span>Achieve</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
 
     <!-- Approved Tasks -->
     <?php if (mysqli_num_rows($queryRun) > 0): ?>
@@ -650,8 +879,18 @@ $totalPages = ceil($collectNumRows / $limit);
                 <div class="row">
                     <?php while ($task = mysqli_fetch_assoc($queryRun)): ?>
                         <div class="col-lg-4 col-md-6">
-                            <a href="post_detail.php?id=<?php echo $task['id']; ?>" style="text-decoration: none; color: inherit;">
+                            <a href="post_detail.php?id=<?php echo $task['id']; ?>&ref=homepage" style="text-decoration: none; color: inherit;">
                             <div class="task-card">
+                                <?php 
+                                // Check if this post belongs to the logged-in user
+                                if (isset($_SESSION['user_id']) && $task['user_id'] == $_SESSION['user_id']): 
+                                ?>
+                                    <div class="your-post-badge">
+                                        <i class="fas fa-user-check"></i>
+                                        <span>Your Post</span>
+                                    </div>
+                                <?php endif; ?>
+
                                 <?php if (!empty($task['image'])): ?>
                                     <div class="task-thumb">
                                         <img class="task-image" src="<?php echo htmlspecialchars($task['image']); ?>" alt="Task Image">
@@ -663,7 +902,17 @@ $totalPages = ceil($collectNumRows / $limit);
                                 <div class="task-body">
                                     <h5><?php echo htmlspecialchars($task['status']); ?></h5>
                                     <h5><?php echo htmlspecialchars($task['task_name']); ?></h5>
-                                    <p><?php echo htmlspecialchars($task['description']); ?></p>
+                                    <p class="task-description">
+                                        <?php 
+                                            $description = htmlspecialchars($task['description']);
+                                            $words = explode(' ', $description);
+                                            if (count($words) > 30) {
+                                                echo implode(' ', array_slice($words, 0, 30)) . '...';
+                                            } else {
+                                                echo $description;
+                                            }
+                                        ?>
+                                    </p>
                                     <div class="task-date"><i class="far fa-calendar"></i> <?php echo htmlspecialchars($task['created_at']); ?></div>
 
                                     <!-- for likes  -->
@@ -689,55 +938,14 @@ $totalPages = ceil($collectNumRows / $limit);
                                     </div>
 
                                     <!-- Comments Section -->
-                                    <div class="comments-section mt-3">
-                                        <h6 class="fw-semibold mb-2">💬 Comments</h6>
-
-
-                                        <!-- Comment List -->
-                                        <div class="comment-list">
-                                            <?php
-                                            $task_id = $task['id'];
-                                            // Get total comments count for this task
-                                            $countQuery = "SELECT COUNT(*) AS total_comments FROM comments WHERE task_id = $task_id";
-                                            $countResult = mysqli_query($conn, $countQuery);
-                                            $countRow = mysqli_fetch_assoc($countResult);
-                                            $totalComments = $countRow['total_comments'];
-                                            ?>
-                                            <!-- Total Comments Badge -->
-                                            <div class="mb-2">
-                                                <span class="badge rounded-pill" style="background:#667eea;color:#fff;font-size:1rem;">
-                                                    <i class="fas fa-comment-dots"></i> <?php echo $totalComments; ?> Comments
-                                                </span>
-                                            </div>
-                                            <?php
-                                            $commentQuery = "SELECT c.comment_text, u.name, c.created_at FROM comments c JOIN users u ON c.user_id = u.id WHERE c.task_id = $task_id ORDER BY c.created_at DESC";
-                                            $commentRun = mysqli_query($conn, $commentQuery);
-                                            if (mysqli_num_rows($commentRun) > 0) {
-                                                while ($comment = mysqli_fetch_assoc($commentRun)) {
-                                                    echo '<div class="comment d-flex align-items-start mb-2" style="background:#fff;border-radius:10px;padding:0.75rem 1rem;box-shadow:0 2px 8px rgba(102,126,234,0.08);"> <div><span class="fw-semibold" style="color:#667eea;">' . htmlspecialchars($comment['name']) . '</span><span class="badge rounded-pill ms-2" style="background:#f1f5ff;color:#667eea;font-size:0.8rem;">' . date('d M, Y h:i A', strtotime($comment['created_at'])) . '</span><div style="margin-top:4px;color:#444;">' . htmlspecialchars($comment['comment_text']) . '</div></div></div>';
-                                                }
-                                            } else {
-                                                echo '<p class="text-muted small">No comments yet. Be the first to comment!</p>';
-                                            }
-
-                                            ?>
-                                        </div>
-
-                                        <!-- Add Comment -->
-                                        <?php if (isset($_SESSION['user_id'])): ?>
-                                            <form method="POST" class="add-comment mt-3" action="">
-                                                <input type="hidden" name="task_id" value="<?php echo $task['id']; ?>">
-                                                <div class="input-group">
-                                                    <input type="text" name="comment_text" class="form-control" placeholder="Write a comment..." required>
-                                                    <button class="btn btn-outline-primary" type="submit" name="add_comment"><i class="fas fa-paper-plane"></i></button>
-                                                </div>
-                                            </form>
-                                        <?php else: ?>
-                                            <p class="text-muted small mt-2">🔒 <a href="login.php">Login</a> to add a comment.</p>
-                                        <?php endif; ?>
-                                    </div>
+                                   
                                 </div>
 
+                                <!-- Call to Action -->
+                                <div class="card-cta">
+                                    <i class="fas fa-arrow-right"></i>
+                                    <span>Click to view full details & comments</span>
+                                </div>
 
                             </div>
                             </a>
@@ -771,12 +979,138 @@ $totalPages = ceil($collectNumRows / $limit);
         </section>
     <?php endif; ?>
 
+    <!-- Features Section -->
+    <section class="features-section">
+	<div class="container">
+		<h2 class="section-title">✨ Why Choose TaskFlow?</h2>
+		<p class="section-subtitle">Powerful features to help you stay productive</p>
+		<div class="row g-4 mt-4">
+			<div class="col-lg-4 col-md-6">
+				<div class="feature-card">
+					<div class="feature-icon">
+						<i class="fas fa-bolt"></i>
+					</div>
+					<h4>Lightning Fast</h4>
+					<p>Quick and responsive interface that helps you manage tasks without delay</p>
+				</div>
+			</div>
+			<div class="col-lg-4 col-md-6">
+				<div class="feature-card">
+					<div class="feature-icon">
+						<i class="fas fa-shield-alt"></i>
+					</div>
+					<h4>Secure & Reliable</h4>
+					<p>Your data is protected with enterprise-grade security measures</p>
+				</div>
+			</div>
+			<div class="col-lg-4 col-md-6">
+				<div class="feature-card">
+					<div class="feature-icon">
+						<i class="fas fa-mobile-alt"></i>
+					</div>
+					<h4>Fully Responsive</h4>
+					<p>Access your tasks anytime, anywhere on any device</p>
+				</div>
+			</div>
+			<div class="col-lg-4 col-md-6">
+				<div class="feature-card">
+					<div class="feature-icon">
+						<i class="fas fa-palette"></i>
+					</div>
+					<h4>Beautiful Design</h4>
+					<p>Modern and intuitive interface that makes task management enjoyable</p>
+				</div>
+			</div>
+			<div class="col-lg-4 col-md-6">
+				<div class="feature-card">
+					<div class="feature-icon">
+						<i class="fas fa-sync-alt"></i>
+					</div>
+					<h4>Real-time Sync</h4>
+					<p>All your tasks synced instantly across all platforms</p>
+				</div>
+			</div>
+			<div class="col-lg-4 col-md-6">
+				<div class="feature-card">
+					<div class="feature-icon">
+						<i class="fas fa-headset"></i>
+					</div>
+					<h4>24/7 Support</h4>
+					<p>Our dedicated team is always here to help you succeed</p>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+	<div class="container">
+		<div class="row">
+			<div class="col-md-3 col-6">
+				<div class="stat-item">
+					<span class="stat-number">
+						<i class="fas fa-users"></i> <?php echo $collectNumRows; ?>+
+					</span>
+					<span class="stat-label">Active Posts</span>
+				</div>
+			</div>
+			<div class="col-md-3 col-6">
+				<div class="stat-item">
+					<span class="stat-number">
+						<i class="fas fa-check-circle"></i> 100%
+					</span>
+					<span class="stat-label">Success Rate</span>
+				</div>
+			</div>
+			<div class="col-md-3 col-6">
+				<div class="stat-item">
+					<span class="stat-number">
+						<i class="fas fa-clock"></i> 24/7
+					</span>
+					<span class="stat-label">Availability</span>
+				</div>
+			</div>
+			<div class="col-md-3 col-6">
+				<div class="stat-item">
+					<span class="stat-number">
+						<i class="fas fa-heart"></i> 99%
+					</span>
+					<span class="stat-label">Satisfaction</span>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
     <!-- Footer -->
     <footer class="footer">
-        <div class="container text-center">
-            <p>&copy; 2025 TaskFlow. All rights reserved.</p>
-        </div>
-    </footer>
+	<div class="container">
+		<div class="footer-content">
+			<div class="social-icons">
+				<a href="https://facebook.com" target="_blank" aria-label="Facebook" title="Facebook">
+					<i class="fab fa-facebook-f"></i>
+				</a>
+				<a href="https://twitter.com" target="_blank" aria-label="Twitter" title="Twitter">
+					<i class="fab fa-twitter"></i>
+				</a>
+				<a href="https://instagram.com" target="_blank" aria-label="Instagram" title="Instagram">
+					<i class="fab fa-instagram"></i>
+				</a>
+				<a href="https://linkedin.com" target="_blank" aria-label="LinkedIn" title="LinkedIn">
+					<i class="fab fa-linkedin-in"></i>
+				</a>
+				<a href="https://github.com" target="_blank" aria-label="GitHub" title="GitHub">
+					<i class="fab fa-github"></i>
+				</a>
+				<a href="https://youtube.com" target="_blank" aria-label="YouTube" title="YouTube">
+					<i class="fab fa-youtube"></i>
+				</a>
+			</div>
+			<p>&copy; 2025 TaskFlow. All rights reserved.</p>
+		</div>
+	</div>
+</footer>
 
     <!-- JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>

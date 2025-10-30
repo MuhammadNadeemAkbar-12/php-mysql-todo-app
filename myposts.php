@@ -280,6 +280,15 @@ $totalPages = ceil($collectNumRows / $limit);
             z-index: 1;
         }
 
+        .task-description {
+            color: #555;
+            line-height: 1.6;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
         .task-date {
             color: #999;
             font-size: 0.9rem;
@@ -290,6 +299,87 @@ $totalPages = ceil($collectNumRows / $limit);
 
         .task-date i {
             margin-right: 0.5rem;
+        }
+
+        .like-action {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+        }
+
+        .btn-like {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            border-radius: 999px;
+            border: 1px solid rgba(102, 126, 234, 0.4);
+            background: #fff;
+            color: #667eea;
+            padding: 0.4rem 1rem;
+            font-weight: 600;
+        }
+
+        .btn-like:hover {
+            background: rgba(102, 126, 234, 0.08);
+        }
+
+        .btn-like.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .like-count {
+            background: rgba(102, 126, 234, 0.12);
+            color: #4A4A68;
+            padding: 0.35rem 0.75rem;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .card-cta {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.08));
+            border-radius: 10px;
+            text-align: center;
+            color: #667eea;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border: 1px dashed rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .card-cta i {
+            font-size: 1rem;
+            animation: bounceHorizontal 1.5s ease-in-out infinite;
+        }
+
+        .task-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 35px rgba(74, 144, 226, 0.2);
+        }
+
+        .task-card:hover .card-cta {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
+            border-color: rgba(102, 126, 234, 0.5);
+        }
+
+        @keyframes bounceHorizontal {
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            50% {
+                transform: translateX(5px);
+            }
         }
 
         /* About Section */
@@ -548,7 +638,7 @@ $totalPages = ceil($collectNumRows / $limit);
                <div class="row">
                     <?php while ($task = mysqli_fetch_assoc($queryRun)): ?>
                         <div class="col-lg-4 col-md-6">
-                            <a href="post_detail.php?id=<?php echo $task['id']; ?>" style="text-decoration: none; color: inherit;">
+                            <a href="post_detail.php?id=<?php echo $task['id']; ?>&ref=myposts" style="text-decoration: none; color: inherit;">
                             <div class="task-card">
                                 <?php if (!empty($task['image'])): ?>
                                     <div class="task-thumb">
@@ -561,14 +651,24 @@ $totalPages = ceil($collectNumRows / $limit);
                                 <div class="task-body">
                                     <h5><?php echo htmlspecialchars($task['status']); ?></h5>
                                     <h5><?php echo htmlspecialchars($task['task_name']); ?></h5>
-                                    <p><?php echo htmlspecialchars($task['description']); ?></p>
+                                    <p class="task-description">
+                                        <?php 
+                                            $description = htmlspecialchars($task['description']);
+                                            $words = explode(' ', $description);
+                                            if (count($words) > 30) {
+                                                echo implode(' ', array_slice($words, 0, 30)) . '...';
+                                            } else {
+                                                echo $description;
+                                            }
+                                        ?>
+                                    </p>
                                     <div class="task-date"><i class="far fa-calendar"></i> <?php echo htmlspecialchars($task['created_at']); ?></div>
 
                                     <!-- for likes  -->
                                     <div class="like-action mt-2">
                                         <?php
                                             $task_id = $task['id'];
-                                            // Get total comments count for this task
+                                            // Get total likes count for this task
                                             $countQuery = "SELECT COUNT(*) AS total_likes FROM likes WHERE task_id = $task_id";
                                             $countResult = mysqli_query($conn, $countQuery);
                                             $countRow = mysqli_fetch_assoc($countResult);
@@ -585,57 +685,13 @@ $totalPages = ceil($collectNumRows / $limit);
                                             <?php echo $totalLikes; ?> Likes
                                         </span>
                                     </div>
-
-                                    <!-- Comments Section -->
-                                    <div class="comments-section mt-3">
-                                        <h6 class="fw-semibold mb-2">💬 Comments</h6>
-
-
-                                        <!-- Comment List -->
-                                        <div class="comment-list">
-                                            <?php
-                                            $task_id = $task['id'];
-                                            // Get total comments count for this task
-                                            $countQuery = "SELECT COUNT(*) AS total_comments FROM comments WHERE task_id = $task_id";
-                                            $countResult = mysqli_query($conn, $countQuery);
-                                            $countRow = mysqli_fetch_assoc($countResult);
-                                            $totalComments = $countRow['total_comments'];
-                                            ?>
-                                            <!-- Total Comments Badge -->
-                                            <div class="mb-2">
-                                                <span class="badge rounded-pill" style="background:#667eea;color:#fff;font-size:1rem;">
-                                                    <i class="fas fa-comment-dots"></i> <?php echo $totalComments; ?> Comments
-                                                </span>
-                                            </div>
-                                            <?php
-                                            $commentQuery = "SELECT c.comment_text, u.name, c.created_at FROM comments c JOIN users u ON c.user_id = u.id WHERE c.task_id = $task_id ORDER BY c.created_at DESC";
-                                            $commentRun = mysqli_query($conn, $commentQuery);
-                                            if (mysqli_num_rows($commentRun) > 0) {
-                                                while ($comment = mysqli_fetch_assoc($commentRun)) {
-                                                    echo '<div class="comment d-flex align-items-start mb-2" style="background:#fff;border-radius:10px;padding:0.75rem 1rem;box-shadow:0 2px 8px rgba(102,126,234,0.08);"> <div><span class="fw-semibold" style="color:#667eea;">' . htmlspecialchars($comment['name']) . '</span><span class="badge rounded-pill ms-2" style="background:#f1f5ff;color:#667eea;font-size:0.8rem;">' . date('d M, Y h:i A', strtotime($comment['created_at'])) . '</span><div style="margin-top:4px;color:#444;">' . htmlspecialchars($comment['comment_text']) . '</div></div></div>';
-                                                }
-                                            } else {
-                                                echo '<p class="text-muted small">No comments yet. Be the first to comment!</p>';
-                                            }
-
-                                            ?>
-                                        </div>
-
-                                        <!-- Add Comment -->
-                                        <?php if (isset($_SESSION['user_id'])): ?>
-                                            <form method="POST" class="add-comment mt-3" action="">
-                                                <input type="hidden" name="task_id" value="<?php echo $task['id']; ?>">
-                                                <div class="input-group">
-                                                    <input type="text" name="comment_text" class="form-control" placeholder="Write a comment..." required>
-                                                    <button class="btn btn-outline-primary" type="submit" name="add_comment"><i class="fas fa-paper-plane"></i></button>
-                                                </div>
-                                            </form>
-                                        <?php else: ?>
-                                            <p class="text-muted small mt-2">🔒 <a href="login.php">Login</a> to add a comment.</p>
-                                        <?php endif; ?>
-                                    </div>
                                 </div>
 
+                                <!-- Call to Action -->
+                                <div class="card-cta">
+                                    <i class="fas fa-arrow-right"></i>
+                                    <span>Click to view full details & comments</span>
+                                </div>
 
                             </div>
                             </a>

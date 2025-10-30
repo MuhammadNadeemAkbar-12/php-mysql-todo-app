@@ -37,7 +37,23 @@ $commentSql = "
     WHERE c.task_id = '$postId'
     ORDER BY c.created_at DESC
 ";
-$commentResult = mysqli_query($conn, $commentSql);
+$comments = mysqli_query($conn, $commentSql);
+
+
+// Comment Insert Logic
+if (isset($_POST['add_comment']) && isset($_SESSION['user_id'])) {
+       $task_id = $_POST['task_id'];
+       $user_id = $_SESSION['user_id'];
+       $comment_text = mysqli_real_escape_string($conn, $_POST['comment_text']);
+
+       $insertQuery = "INSERT INTO comments (task_id, user_id, comment_text) VALUES ('$task_id', '$user_id', '$comment_text')";
+       mysqli_query($conn, $insertQuery);
+        header("Location: post_detail.php?id=$postId");
+           exit();
+       // Page reload to show new comment
+       //     header("Location: " . $_SERVER['PHP_SELF']);
+       //     exit();
+}
 
 
 // Get total likes count
@@ -71,6 +87,7 @@ $totalComments = $CommentRow['total_comments'];
 </head>
 
 <style>
+
        * {
               margin: 0;
               padding: 0;
@@ -312,6 +329,44 @@ $totalComments = $CommentRow['total_comments'];
               font-size: 0.95rem;
        }
 
+       .add-comment {
+              margin-top: 1.5rem;
+       }
+
+       .add-comment .input-group {
+              box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+              border-radius: 50px;
+              overflow: hidden;
+       }
+
+       .add-comment .form-control {
+              border: 2px solid #e0e0e0;
+              border-radius: 50px 0 0 50px;
+              padding: 0.8rem 1.5rem;
+              font-size: 0.95rem;
+              border-right: none;
+       }
+
+       .add-comment .form-control:focus {
+              border-color: #667eea;
+              box-shadow: none;
+       }
+
+       .add-comment .btn {
+              border-radius: 0 50px 50px 0;
+              padding: 0.8rem 1.5rem;
+              background: linear-gradient(135deg, #667eea, #764ba2);
+              border: 2px solid #667eea;
+              color: white;
+              font-weight: 600;
+              transition: all 0.3s ease;
+       }
+
+       .add-comment .btn:hover {
+              background: linear-gradient(135deg, #764ba2, #667eea);
+              transform: scale(1.05);
+       }
+
        .no-comments {
               text-align: center;
               padding: 3rem 1rem;
@@ -322,6 +377,48 @@ $totalComments = $CommentRow['total_comments'];
               font-size: 3rem;
               margin-bottom: 1rem;
               color: #ddd;
+       }
+
+       .comment-toggle-btn {
+              background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+              border: 2px dashed rgba(102, 126, 234, 0.3);
+              color: #667eea;
+              padding: 0.8rem 2rem;
+              border-radius: 50px;
+              font-weight: 600;
+              font-size: 0.95rem;
+              width: 100%;
+              transition: all 0.3s ease;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 0.6rem;
+              margin-top: 1rem;
+       }
+
+       .comment-toggle-btn:hover {
+              background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+              border-color: rgba(102, 126, 234, 0.6);
+              transform: translateY(-2px);
+              box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+       }
+
+       .comment-toggle-btn i {
+              font-size: 1rem;
+              transition: transform 0.3s ease;
+       }
+
+       .comment-toggle-btn.expanded i {
+              transform: rotate(180deg);
+       }
+
+       .hidden-comments {
+              display: none;
+       }
+
+       .hidden-comments.show {
+              display: block;
        }
 
        .sidebar-widget {
@@ -454,42 +551,6 @@ $totalComments = $CommentRow['total_comments'];
                                           <p class="description-text"><?php echo nl2br(htmlspecialchars($task['description'])); ?></p>
                                    </div>
                             </div>
-
-                            <div class="comments-card">
-                                   <div class="comments-header">
-                                          <i class="fas fa-comments"></i>
-                                          <span>Comments (<?php echo htmlspecialchars($totalComments); ?>)</span>
-                                   </div>
-                                   <?php if (mysqli_num_rows($commentResult) > 0): ?>
-                                          <!-- if (mysqli_num_rows($commentResult) > 0) {
-                                          while ($row = mysqli_fetch_assoc($commentResult)) {
-                                          // $comments[] = $row;
-                                          print_r($row['created_at']);
-                                          }
-                                          } -->
-
-                                          <?php while($row = mysqli_fetch_assoc($commentResult)): ?>
-                                                 <div class="comment-item">
-                                                        <div class="comment-header">
-                                                               <div>
-                                                                      <span class="comment-author"><?php echo htmlspecialchars($row['name']); ?></span>
-                                                                      <span class="comment-email"><?php echo htmlspecialchars($row['email']); ?></span>
-                                                               </div>
-                                                               <div class="comment-time">
-                                                                      <i class="far fa-clock"></i>
-                                                                      <span><?php echo date('d M Y, h:i A', strtotime($row['created_at'])); ?></span>
-                                                               </div>
-                                                        </div>
-                                                        <p class="comment-text"><?php echo nl2br(htmlspecialchars($row['comment_text'])); ?></p>
-                                                 </div>
-                                          <?php endwhile; ?>
-                                   <?php else: ?>
-                                          <div class="no-comments">
-                                                 <i class="far fa-comment-slash"></i>
-                                                 <p class="mb-0">No comments yet. Be the first to comment!</p>
-                                          </div>
-                                   <?php endif; ?>
-                            </div>
                      </div>
 
                      <div class="col-lg-4">
@@ -530,11 +591,96 @@ $totalComments = $CommentRow['total_comments'];
                                           </div>
                                    </div>
                             </div>
+
+                            <div class="comments-card">
+                                   <div class="comments-header">
+                                          <i class="fas fa-comments"></i>
+                                          <span>Comments (<?php echo htmlspecialchars($totalComments); ?>)</span>
+                                   </div>
+
+                                   <?php if (isset($_SESSION['user_id'])): ?>
+                                          <form method="POST" class="add-comment" action="">
+                                                 <input type="hidden" name="task_id" value="<?php echo $task['id']; ?>">
+                                                 <div class="input-group">
+                                                        <input type="text" name="comment_text" class="form-control" placeholder="Write a comment..." required>
+                                                        <button class="btn" type="submit" name="add_comment"><i class="fas fa-paper-plane"></i></button>
+                                                 </div>
+                                          </form>
+                                   <?php else: ?>
+                                          <p class="text-muted small mt-2">🔒 <a href="login.php">Login</a> to add a comment.</p>
+                                   <?php endif; ?>
+
+                                   <div class="mt-4">
+                                          <?php if (mysqli_num_rows($comments) > 0): ?>
+                                                 <?php 
+                                                 $commentCount = 0;
+                                                 $totalCommentsAvailable = mysqli_num_rows($comments);
+                                                 mysqli_data_seek($comments, 0); 
+                                                 ?>
+                                                 
+                                                 <?php while ($row = mysqli_fetch_assoc($comments)): ?>
+                                                        <?php 
+                                                        $commentCount++;
+                                                        $isHidden = $commentCount > 2 ? 'hidden-comments' : '';
+                                                        ?>
+                                                        <div class="comment-item <?php echo $isHidden; ?>">
+                                                               <div class="comment-header">
+                                                                      <div>
+                                                                             <span class="comment-author"><?php echo htmlspecialchars($row['name']); ?></span>
+                                                                      </div>
+                                                                      <div class="comment-time">
+                                                                             <i class="far fa-clock"></i>
+                                                                             <span><?php echo date('d M Y, h:i A', strtotime($row['created_at'])); ?></span>
+                                                                      </div>
+                                                               </div>
+                                                               <p class="comment-text"><?php echo nl2br(htmlspecialchars($row['comment_text'])); ?></p>
+                                                        </div>
+                                                 <?php endwhile; ?>
+
+                                                 <?php if ($totalCommentsAvailable > 2): ?>
+                                                        <button type="button" class="comment-toggle-btn" id="toggleComments">
+                                                               <i class="fas fa-chevron-down"></i>
+                                                               <span class="toggle-text">See All Comments (<?php echo $totalCommentsAvailable - 4; ?> more)</span>
+                                                        </button>
+                                                 <?php endif; ?>
+                                          <?php else: ?>
+                                                 <div class="no-comments">
+                                                        <i class="far fa-comment-slash"></i>
+                                                        <p class="mb-0">No comments yet. Be the first to comment!</p>
+                                                 </div>
+                                          <?php endif; ?>
+                                   </div>
+                            </div>
                      </div>
               </div>
        </div>
 
        <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+       <script>
+              // Toggle comments visibility
+              document.addEventListener('DOMContentLoaded', function() {
+                     const toggleBtn = document.getElementById('toggleComments');
+                     if (toggleBtn) {
+                            toggleBtn.addEventListener('click', function() {
+                                   const hiddenComments = document.querySelectorAll('.hidden-comments');
+                                   const toggleText = this.querySelector('.toggle-text');
+                                   const icon = this.querySelector('i');
+                                   
+                                   hiddenComments.forEach(comment => {
+                                          comment.classList.toggle('show');
+                                   });
+
+                                   if (this.classList.contains('expanded')) {
+                                          this.classList.remove('expanded');
+                                          toggleText.textContent = 'See All Comments (<?php echo $totalCommentsAvailable - 4; ?> more)';
+                                   } else {
+                                          this.classList.add('expanded');
+                                          toggleText.textContent = 'Show Less Comments';
+                                   }
+                            });
+                     }
+              });
+       </script>
 </body>
 
 </html>
