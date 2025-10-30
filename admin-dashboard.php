@@ -12,21 +12,41 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-// for status 
-if (isset($_POST['approve'])) {
-    $task_id = $_POST['task_id'];
-    mysqli_query($conn, "UPDATE tasks SET status = 'approved' WHERE id = '$task_id'");
+// Handle Approve / Reject
+// Handle Approve / Reject
+if (isset($_POST['approve']) || isset($_POST['reject'])) {
+
+    $task_id = intval($_POST['task_id']);
+    $action = isset($_POST['approve']) ? 'approved' : 'rejected';
+
+    // Step 1: Fetch task owner and title
+    $taskRes = mysqli_query($conn, "SELECT user_id, task_name FROM tasks WHERE id = $task_id LIMIT 1");
+    if ($taskRow = mysqli_fetch_assoc($taskRes)) {
+
+        $user_id = intval($taskRow['user_id']);
+        $task_name = mysqli_real_escape_string($conn, $taskRow['task_name']);
+
+        // Step 2: Update task status
+        mysqli_query($conn, "UPDATE tasks SET status = '$action' WHERE id = $task_id");
+
+        // Step 3: Insert notification for user
+        $notif_message = "Your task '$task_name' has been $action by admin.";
+        $notif_message = mysqli_real_escape_string($conn, $notif_message);
+
+        mysqli_query($conn, "
+            INSERT INTO notifications (user_id, message, is_read, created_at)
+            VALUES ($user_id, '$notif_message', 0, NOW())
+        ");
+    }
+
+    // Step 4: Redirect back
+    header("Location: admin-dashboard.php");
+    exit;
 }
 
-if (isset($_POST['reject'])) {
-    $task_id = $_POST['task_id'];
-    mysqli_query($conn, "UPDATE tasks SET status = 'rejected' WHERE id = '$task_id'");
-}
 
-if (isset($_POST['block'])) {
-    $task_id = $_POST['task_id'];
-    mysqli_query($conn, "UPDATE tasks SET status = 'blocked' WHERE id = '$task_id'");
-}
+
+
 
 // name of logged admin 
 $user_name_query = "SELECT role FROM users WHERE role = 'admin' LIMIT 1";
@@ -99,6 +119,28 @@ if ($queryResult) {
     $Taskrow = mysqli_fetch_assoc($queryResult);
 }
 
+// for notifications 
+$admin_id = $_SESSION['user_id'];
+
+$notificationsquery = "
+    SELECT n.id, n.user_id, n.message, n.created_at, u.name 
+    FROM notifications n 
+    JOIN users u ON n.user_id = u.id 
+    WHERE n.is_read = 0 
+    AND n.user_id = $admin_id
+    ORDER BY n.created_at DESC
+";
+
+$notifyresult = mysqli_query($conn, $notificationsquery);
+$notification_count = mysqli_num_rows($notifyresult);
+
+// Mark notification as read
+if (isset($_POST['mark_read'])) {
+    $notif_id = intval($_POST['notif_id']);
+    mysqli_query($conn, "UPDATE notifications SET is_read = 1 WHERE id = '$notif_id'");
+    header("Location: admin-dashboard.php");
+    exit;
+}
 
 // all pending task 
 $fetchAllPendingQuery = "SELECT COUNT(*) AS pending_task FROM tasks WHERE status = 'pending'";
@@ -125,7 +167,7 @@ if ($rejectedueryResulty) {
 }
 
 // all blocked task 
-$fetchAllBlockedQuery = "SELECT COUNT(*) AS blcoked_task FROM tasks WHERE status = 'blcoked'";
+$fetchAllBlockedQuery = "SELECT COUNT(*) AS blcoked_task FROM tasks WHERE status = 'blocked'"; // fixed status value
 $blocledqueryResulty = mysqli_query($conn, $fetchAllBlockedQuery);
 
 if ($blocledqueryResulty) {
@@ -225,6 +267,175 @@ if ($blocledqueryResulty) {
         .btn-primary:active {
             background: linear-gradient(135deg, #4d63c7, #5d3883);
         }
+
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+            margin-right: 20px;
+        }
+
+        .notification-bell i {
+            font-size: 24px;
+            color: #667eea;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .notification-dropdown {
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            width: 350px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+        }
+
+        .notification-dropdown.show {
+            display: block;
+        }
+
+        .notification-header {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            font-weight: bold;
+        }
+
+        .notification-item {
+            padding: 15px;
+            border-bottom: 1px solid #f5f5f5;
+            transition: background 0.2s;
+        }
+
+        .notification-item:hover {
+            background: #f8f9fa;
+        }
+
+        .notification-item p {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .notification-item small {
+            color: #999;
+            display: block;
+            margin-top: 5px;
+        }
+
+        .mark-read-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .mark-read-btn:hover {
+            background: #5568d3;
+        }
+
+        .no-notifications {
+            padding: 30px;
+            text-align: center;
+            color: #999;
+        }
+
+        /* Action dropdown menu for admin */
+        .admin-action-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .admin-action-toggle {
+            background: transparent;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            padding: 4px 10px;
+            color: #667eea;
+            font-weight: bold;
+            transition: color 0.2s;
+        }
+
+        .admin-action-toggle:hover {
+            color: #5568d3;
+        }
+
+        .admin-action-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+            min-width: 180px;
+            z-index: 100;
+            overflow: hidden;
+        }
+
+        .admin-action-menu.show {
+            display: block;
+        }
+
+        .admin-action-menu button,
+        .admin-action-menu a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px 16px;
+            text-align: left;
+            border: none;
+            background: transparent;
+            color: #333;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            font-size: 14px;
+        }
+
+        .admin-action-menu button:hover,
+        .admin-action-menu a:hover {
+            background: #f5f5f5;
+        }
+
+        .admin-action-menu .text-success:hover {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .admin-action-menu .text-danger:hover {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .admin-action-menu .text-info:hover {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
     </style>
 </head>
 
@@ -252,13 +463,52 @@ if ($blocledqueryResulty) {
     <div class="top-navbar">
         <div class="admin-profile">
             <a href="homepage.php" class="btn btn-success">
-                <i class="fas fa-sign-out-alt me-2"></i>Back To Homepage
+                <i class="fas fa-sign-out-alt me-2"></i>Back 
             </a>
             <form action="" method="post" class="logout-form ms-2">
                 <button type="submit" name="logout" class="btn btn-outline-danger">
                     <i class="fas fa-sign-out-alt me-2"></i>Logout
                 </button>
             </form>
+
+            <!-- Notification Bell -->
+            <div class="notification-bell" onclick="toggleNotifications()">
+                <i class="fas fa-bell"></i>
+                <?php if ($notification_count > 0): ?>
+                    <span class="notification-badge"><?php echo $notification_count; ?></span>
+                <?php endif; ?>
+
+                <div class="notification-dropdown" id="notificationDropdown">
+                    <div class="notification-header">
+                        Notifications (<?php echo $notification_count; ?>)
+                    </div>
+                    <?php if ($notification_count > 0): ?>
+                        <?php
+                        // mysqli_data_seek($notifyresult, 0);
+                        while ($notif = mysqli_fetch_assoc($notifyresult)):
+                        ?>
+                            <div class="notification-item">
+                                <p><strong><?php echo htmlspecialchars($notif['name']); ?></strong></p>
+                                <p><?php echo htmlspecialchars($notif['message']); ?></p>
+                                <small><?php echo date('M d, Y h:i A', strtotime($notif['created_at'])); ?></small>
+                                <form method="POST" style="margin: 0;">
+                                    <input type="hidden" name="notif_id" value="<?php echo $notif['id']; ?>">
+                                    <button type="submit" name="mark_read" class="btn btn-primary btn-sm d-flex align-items-center gap-2">
+                                        <i class="bi bi-check-circle-fill"></i> Mark as Read
+                                    </button>
+
+                                </form>
+                            </div>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <div class="no-notifications">
+                            <i class="fas fa-inbox" style="font-size: 40px; color: #ddd;"></i>
+                            <p>No new notifications</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
             <div>
                 <div class="admin-name">Admin Panel</div>
                 <b>Welcome, <?php echo htmlspecialchars($user_name, ENT_QUOTES, 'UTF-8'); ?></b>
@@ -339,47 +589,54 @@ if ($blocledqueryResulty) {
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <!-- <th>User ID</th> -->
                                 <th>User Name</th>
                                 <th>Task Description</th>
                                 <th>Image</th>
-                                <th>Action</th>
+                                <th class="text-center">Actions</th>
                                 <th>Status</th>
-                           
-
-
                             </tr>
                         </thead>
                         <tbody>
-                            <?php while ($task = mysqli_fetch_assoc($result)):; ?>
-
+                            <?php while ($task = mysqli_fetch_assoc($result)): ?>
                                 <tr>
-
                                     <td><?php echo htmlspecialchars($task['id']); ?></td>
-                                    <!-- <td><?php echo htmlspecialchars($task['user_id']); ?></td> -->
                                     <td><?php echo htmlspecialchars($task['task_name']); ?></td>
-                                    <td><?php echo htmlspecialchars($task['description']); ?></td>
+                                    <td>
+                                        <?php echo date('Y-m-d', strtotime($task['created_at'])); ?>
+
+                                       
+                                    </td>
                                     <td>
                                         <?php if (!empty($task['image'])): ?>
-                                            <img src="<?php echo htmlspecialchars($task['image']); ?>" alt="Task Image" style="width:60px; height:60px; object-fit:cover;">
+                                            <img src="<?php echo htmlspecialchars($task['image']); ?>" alt="Task Image" style="width:60px; height:60px; object-fit:cover; border-radius:6px;">
                                         <?php else: ?>
                                             <span class="text-muted">No Image</span>
                                         <?php endif; ?>
                                     </td>
 
-                                    <td>
-                                        <form method="POST" style="display:inline;">
-                                            <input type="hidden" name="task_id" value="<?= $task['id']; ?>">
-                                            <button name="approve" class="btn btn-success btn-sm"><i class="fas fa-check"></i> Approve</button>
-                                        </form>
-
-                                        <form method="POST" style="display:inline;">
-                                            <input type="hidden" name="task_id" value="<?= $task['id']; ?>">
-                                            <button name="reject" class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Reject</button>
-                                        </form>
-
-
-
+                                    <td class="text-center">
+                                        <div class="admin-action-dropdown">
+                                            <button class="admin-action-toggle" onclick="toggleAdminActionMenu(event, this)" aria-label="Actions">
+                                                ....
+                                            </button>
+                                            <div class="admin-action-menu">
+                                                <button type="button" class="text-info" data-bs-toggle="modal" data-bs-target="#viewTaskModal" data-name="<?php echo htmlspecialchars($task['task_name'], ENT_QUOTES, 'UTF-8'); ?>" data-desc="<?php echo htmlspecialchars($task['description'], ENT_QUOTES, 'UTF-8'); ?>" data-created="<?php echo date('M d, Y', strtotime($task['created_at'])); ?>" data-status="<?php echo htmlspecialchars($task['status']); ?>" data-image="<?php echo htmlspecialchars($task['image'] ?? ''); ?>">
+                                                    <i class="fas fa-eye"></i> View Details
+                                                </button>
+                                                <form method="POST" style="margin:0;">
+                                                    <input type="hidden" name="task_id" value="<?= $task['id']; ?>">
+                                                    <button type="submit" name="approve" class="text-success">
+                                                        <i class="fas fa-check-circle"></i> Approve
+                                                    </button>
+                                                </form>
+                                                <form method="POST" style="margin:0;">
+                                                    <input type="hidden" name="task_id" value="<?= $task['id']; ?>">
+                                                    <button type="submit" name="reject" class="text-danger">
+                                                        <i class="fas fa-times-circle"></i> Reject
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
                                     </td>
 
                                     <td>
@@ -387,18 +644,13 @@ if ($blocledqueryResulty) {
                                             <span class="badge bg-success">Approved</span>
                                         <?php elseif ($task['status'] == 'rejected'): ?>
                                             <span class="badge bg-danger">Rejected</span>
-
-
                                         <?php else: ?>
                                             <span class="badge bg-warning text-dark">Pending</span>
                                         <?php endif; ?>
                                     </td>
-
-
-                                        </td>
                                 </tr>
+                            <?php endwhile; ?>
                         </tbody>
-                    <?php endwhile; ?>
                     </table>
 
 
@@ -451,6 +703,47 @@ if ($blocledqueryResulty) {
         </div>
     </div>
 
+    <!-- View Task Details Modal (Admin) -->
+    <div class="modal fade" id="viewTaskModal" tabindex="-1" aria-labelledby="viewTaskModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="viewTaskModalLabel">
+                        <i class="fas fa-info-circle me-2"></i>Task Details
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold text-muted">Task Name</label>
+                            <p id="admin_view_task_name" class="fs-5 fw-semibold"></p>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label fw-bold text-muted">Status</label>
+                            <p id="admin_view_status"></p>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label fw-bold text-muted">Created At</label>
+                            <p id="admin_view_created_at" class="text-muted"></p>
+                        </div>
+                    </div>
+                    <div class="mb-3" id="admin_view_image_container" style="display:none;">
+                        <label class="form-label fw-bold text-muted">Task Image</label><br>
+                        <img id="admin_view_image" src="" alt="Task Image" style="max-width:100%; max-height:300px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-bold text-muted">Description</label>
+                        <p id="admin_view_description" class="border-start border-4 border-primary ps-3" style="white-space: pre-wrap;"></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -466,6 +759,61 @@ if ($blocledqueryResulty) {
                 }
             });
         });
+
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const bell = document.querySelector('.notification-bell');
+            const dropdown = document.getElementById('notificationDropdown');
+
+            if (bell && !bell.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        function toggleAdminActionMenu(event, button) {
+            event.stopPropagation();
+            const menu = button.nextElementSibling;
+            document.querySelectorAll('.admin-action-menu.show').forEach(m => {
+                if (m !== menu) m.classList.remove('show');
+            });
+            menu.classList.toggle('show');
+        }
+
+        document.addEventListener('click', function() {
+            document.querySelectorAll('.admin-action-menu.show').forEach(m => m.classList.remove('show'));
+        });
+
+        // Handle View Task Modal (Admin)
+        const viewTaskModal = document.getElementById('viewTaskModal');
+        if (viewTaskModal) {
+            viewTaskModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                document.getElementById('admin_view_task_name').textContent = button.getAttribute('data-name');
+                document.getElementById('admin_view_description').textContent = button.getAttribute('data-desc');
+                document.getElementById('admin_view_created_at').textContent = button.getAttribute('data-created');
+                
+                const status = button.getAttribute('data-status');
+                let badge = '<span class="badge bg-warning text-dark">Pending</span>';
+                if (status === 'approved') badge = '<span class="badge bg-success">Approved</span>';
+                if (status === 'rejected') badge = '<span class="badge bg-danger">Rejected</span>';
+                document.getElementById('admin_view_status').innerHTML = badge;
+
+                const imageSrc = button.getAttribute('data-image');
+                const imageContainer = document.getElementById('admin_view_image_container');
+                const imageEl = document.getElementById('admin_view_image');
+                if (imageSrc && imageSrc !== '') {
+                    imageEl.src = imageSrc;
+                    imageContainer.style.display = 'block';
+                } else {
+                    imageContainer.style.display = 'none';
+                }
+            });
+        }
     </script>
 
 </body>
