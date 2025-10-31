@@ -100,9 +100,19 @@ if (isset($_POST['logout'])) {
 }
 
 // All task  
-$allUsers = "SELECT * FROM `tasks` ORDER BY `created_at` DESC";
+$limit = 6;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$offset = ($page - 1) * $limit;
+
+$allUsers = "SELECT * FROM `tasks` ORDER BY `created_at` DESC LIMIT $limit OFFSET $offset";
 $result = mysqli_query($conn, $allUsers);
 
+// Total tasks count for pagination
+$countQuery = "SELECT COUNT(*) as total FROM tasks";
+$countResult = mysqli_query($conn, $countQuery);
+$countRow = mysqli_fetch_assoc($countResult);
+$totalTasks = $countRow['total'];
+$totalPages = ceil($totalTasks / $limit);
 
 // all Users 
 $fetchAllUsers = "SELECT COUNT(*) AS total_users from users where role = 'user'";
@@ -436,6 +446,44 @@ if ($blocledqueryResulty) {
             background: #d1ecf1;
             color: #0c5460;
         }
+
+        /* Pagination */
+        .pagination-modern {
+            margin-top: 2rem;
+        }
+
+        .pagination-modern .page-item {
+            transition: transform 0.2s ease;
+        }
+
+        .pagination-modern .page-item:not(.disabled):hover {
+            transform: translateY(-2px);
+        }
+
+        .pagination-modern .page-link {
+            border: none;
+            margin: 0 0.35rem;
+            border-radius: 999px;
+            padding: 0.6rem 1.1rem;
+            background: rgba(102, 126, 234, 0.12);
+            color: #4A4A68;
+            font-weight: 600;
+            box-shadow: 0 5px 15px rgba(74, 144, 226, 0.15);
+            transition: all 0.25s ease;
+        }
+
+        .pagination-modern .page-link:hover,
+        .pagination-modern .page-item.active .page-link {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            box-shadow: 0 8px 20px rgba(118, 75, 162, 0.25);
+        }
+
+        .pagination-modern .page-item.disabled .page-link {
+            background: rgba(102, 126, 234, 0.06);
+            color: #bbb;
+            box-shadow: none;
+        }
     </style>
 </head>
 
@@ -445,14 +493,11 @@ if ($blocledqueryResulty) {
     <div class="sidebar">
         <div class="sidebar-brand">
             <i class="fas fa-tasks"></i> TaskManager
-            <?php
-
-            ?>
         </div>
         <ul class="sidebar-menu">
-            <li><a href="#" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
-            <li><a href="#"><i class="fas fa-users"></i> All Users</a></li>
-            <li><a href="#"><i class="fas fa-list"></i> All Tasks</a></li>
+            <li><a href="admin-dashboard.php" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="all-users.php"><i class="fas fa-users"></i> All Users</a></li>
+            <li><a href="all-tasks.php"><i class="fas fa-list"></i> All Tasks</a></li>
             <li><a href="#"><i class="fas fa-clock"></i> Pending Tasks</a></li>
             <li><a href="#"><i class="fas fa-check-circle"></i> Approved Tasks</a></li>
             <li><a href="#"><i class="fas fa-times-circle"></i> Rejected Tasks</a></li>
@@ -463,7 +508,7 @@ if ($blocledqueryResulty) {
     <div class="top-navbar">
         <div class="admin-profile">
             <a href="homepage.php" class="btn btn-success">
-                <i class="fas fa-sign-out-alt me-2"></i>Back 
+                <i class="fas fa-sign-out-alt me-2"></i>Back
             </a>
             <form action="" method="post" class="logout-form ms-2">
                 <button type="submit" name="logout" class="btn btn-outline-danger">
@@ -589,11 +634,11 @@ if ($blocledqueryResulty) {
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>User Name</th>
+                                <th>Post Title</th>
                                 <th>Task Description</th>
                                 <th>Image</th>
-                                <th class="text-center">Actions</th>
                                 <th>Status</th>
+                                <th class="text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -604,13 +649,22 @@ if ($blocledqueryResulty) {
                                     <td>
                                         <?php echo date('Y-m-d', strtotime($task['created_at'])); ?>
 
-                                       
+
                                     </td>
                                     <td>
                                         <?php if (!empty($task['image'])): ?>
                                             <img src="<?php echo htmlspecialchars($task['image']); ?>" alt="Task Image" style="width:60px; height:60px; object-fit:cover; border-radius:6px;">
                                         <?php else: ?>
                                             <span class="text-muted">No Image</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php if ($task['status'] == 'approved'): ?>
+                                            <span class="badge bg-success">Approved</span>
+                                        <?php elseif ($task['status'] == 'rejected'): ?>
+                                            <span class="badge bg-danger">Rejected</span>
+                                        <?php else: ?>
+                                            <span class="badge bg-warning text-dark">Pending</span>
                                         <?php endif; ?>
                                     </td>
 
@@ -639,23 +693,40 @@ if ($blocledqueryResulty) {
                                         </div>
                                     </td>
 
-                                    <td>
-                                        <?php if ($task['status'] == 'approved'): ?>
-                                            <span class="badge bg-success">Approved</span>
-                                        <?php elseif ($task['status'] == 'rejected'): ?>
-                                            <span class="badge bg-danger">Rejected</span>
-                                        <?php else: ?>
-                                            <span class="badge bg-warning text-dark">Pending</span>
-                                        <?php endif; ?>
-                                    </td>
+
                                 </tr>
                             <?php endwhile; ?>
                         </tbody>
                     </table>
-
-
-
                 </div>
+
+                <!-- Pagination -->
+                <?php if ($totalPages > 1): ?>
+                    <nav aria-label="Admin Tasks Pagination">
+                        <ul class="pagination pagination-modern justify-content-center">
+                            <!-- Previous Button -->
+                            <li class="page-item <?php echo ($page <= 1) ? 'disabled' : ''; ?>">
+                                <a class="page-link" href="<?php echo ($page > 1) ? 'admin-dashboard.php?page=' . ($page - 1) : '#'; ?>" aria-label="Previous">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+
+                            <!-- Page Numbers -->
+                            <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                                <li class="page-item <?php echo ($i == $page) ? 'active' : ''; ?>">
+                                    <a class="page-link" href="admin-dashboard.php?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                                </li>
+                            <?php endfor; ?>
+
+                            <!-- Next Button -->
+                            <li class="page-item <?php echo ($page >= $totalPages) ? 'disabled' : ''; ?>">
+                                <a class="page-link" href="<?php echo ($page < $totalPages) ? 'admin-dashboard.php?page=' . ($page + 1) : '#'; ?>" aria-label="Next">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                <?php endif; ?>
 
             <?php else: ?>
                 <div class="text-center py-5">
@@ -796,7 +867,7 @@ if ($blocledqueryResulty) {
                 document.getElementById('admin_view_task_name').textContent = button.getAttribute('data-name');
                 document.getElementById('admin_view_description').textContent = button.getAttribute('data-desc');
                 document.getElementById('admin_view_created_at').textContent = button.getAttribute('data-created');
-                
+
                 const status = button.getAttribute('data-status');
                 let badge = '<span class="badge bg-warning text-dark">Pending</span>';
                 if (status === 'approved') badge = '<span class="badge bg-success">Approved</span>';

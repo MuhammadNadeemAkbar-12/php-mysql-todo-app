@@ -107,10 +107,21 @@ if (isset($_POST['add_task'])) {
     }
 }
 
-// Fetch all user tasks
-$tasks_sql = "SELECT * FROM tasks WHERE user_id = $user_id ORDER BY id DESC";
+// Pagination setup
+$limit = 6;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$offset = ($page - 1) * $limit;
+
+// Fetch user tasks with pagination
+$tasks_sql = "SELECT * FROM tasks WHERE user_id = $user_id ORDER BY id DESC LIMIT $limit OFFSET $offset";
 $tasks_result = mysqli_query($conn, $tasks_sql);
 
+// Total tasks count for pagination
+$countQuery = "SELECT COUNT(*) as total FROM tasks WHERE user_id = $user_id";
+$countResult = mysqli_query($conn, $countQuery);
+$countRow = mysqli_fetch_assoc($countResult);
+$totalTasks = $countRow['total'];
+$totalPages = ceil($totalTasks / $limit);
 
 // Handle Update Task
 // if (isset($_POST['update_task'])) {
@@ -334,6 +345,44 @@ if (isset($_POST['mark_read'])) {
 			background: #e7f3ff;
 		}
 
+		/* Pagination */
+		.pagination-modern {
+			margin-top: 2rem;
+		}
+
+		.pagination-modern .page-item {
+			transition: transform 0.2s ease;
+		}
+
+		.pagination-modern .page-item:not(.disabled):hover {
+			transform: translateY(-2px);
+		}
+
+		.pagination-modern .page-link {
+			border: none;
+			margin: 0 0.35rem;
+			border-radius: 999px;
+			padding: 0.6rem 1.1rem;
+			background: rgba(102, 126, 234, 0.12);
+			color: #4A4A68;
+			font-weight: 600;
+			box-shadow: 0 5px 15px rgba(74, 144, 226, 0.15);
+			transition: all 0.25s ease;
+		}
+
+		.pagination-modern .page-link:hover,
+		.pagination-modern .page-item.active .page-link {
+			background: linear-gradient(135deg, #667eea, #764ba2);
+			color: #fff;
+			box-shadow: 0 8px 20px rgba(118, 75, 162, 0.25);
+		}
+
+		.pagination-modern .page-item.disabled .page-link {
+			background: rgba(102, 126, 234, 0.06);
+			color: #bbb;
+			box-shadow: none;
+		}
+
 		@media (max-width: 768px) {
 			.navbar-custom {
 				padding: 12px;
@@ -424,7 +473,7 @@ if (isset($_POST['mark_read'])) {
 					<table class="table table-hover mb-0">
 						<thead>
 							<tr>
-								
+								<th> ID</th>
 								<th>Post Title</th>
                                 <th>Image</th>
 								<th>Created At</th>
@@ -435,6 +484,7 @@ if (isset($_POST['mark_read'])) {
 						<tbody>
 							<?php while ($task = mysqli_fetch_assoc($tasks_result)): ?>
 								<tr>
+                                    <td><?php echo htmlspecialchars($task['id']); ?></td>
                                     <td><?php echo htmlspecialchars($task['task_name']); ?></td>
 									<td>
 										<?php if (!empty($task['image'])): ?>
@@ -483,6 +533,35 @@ if (isset($_POST['mark_read'])) {
 					</table>
 
 				</div>
+
+				<!-- Pagination -->
+				<?php if ($totalPages > 1): ?>
+					<nav aria-label="User Tasks Pagination">
+						<ul class="pagination pagination-modern justify-content-center">
+							<!-- Previous Button -->
+							<li class="page-item <?php echo ($page <= 1) ? 'disabled' : ''; ?>">
+								<a class="page-link" href="<?php echo ($page > 1) ? 'index.php?page=' . ($page - 1) : '#'; ?>" aria-label="Previous">
+									<i class="fas fa-chevron-left"></i>
+								</a>
+							</li>
+
+							<!-- Page Numbers -->
+							<?php for ($i = 1; $i <= $totalPages; $i++): ?>
+								<li class="page-item <?php echo ($i == $page) ? 'active' : ''; ?>">
+									<a class="page-link" href="index.php?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+								</li>
+							<?php endfor; ?>
+
+							<!-- Next Button -->
+							<li class="page-item <?php echo ($page >= $totalPages) ? 'disabled' : ''; ?>">
+								<a class="page-link" href="<?php echo ($page < $totalPages) ? 'index.php?page=' . ($page + 1) : '#'; ?>" aria-label="Next">
+									<i class="fas fa-chevron-right"></i>
+								</a>
+							</li>
+						</ul>
+					</nav>
+				<?php endif; ?>
+
 			<?php else: ?>
 				<div class="text-center py-5">
 					<div class="icon-box mx-auto mb-4" style="width: 80px; height: 80px;">

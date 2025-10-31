@@ -57,15 +57,12 @@ $totalPages = ceil($collectNumRows / $limit);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskFlow - Manage Your Tasks Easily</title>
+    <title>My Posts - TaskFlow</title>
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Google Fonts - Poppins -->
+    <!-- Google Fonts + Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
@@ -111,35 +108,22 @@ $totalPages = ceil($collectNumRows / $limit);
             color: #4A90E2;
         }
 
-        .btn-login {
-            color: #4A90E2;
-            border: 2px solid #4A90E2;
-            padding: 0.5rem 1.5rem;
-            border-radius: 25px;
-            transition: all 0.3s ease;
+        .user-menu .dropdown-menu {
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            border: none;
+            padding: 0.5rem 0;
         }
 
-        .btn-login:hover {
-            background: #4A90E2;
-            color: white;
+        .user-menu .dropdown-item {
+            font-weight: 500;
         }
 
-        .btn-register {
-            background: #4A90E2;
-            color: white;
-            padding: 0.5rem 1.5rem;
-            border-radius: 25px;
-            margin-left: 0.5rem;
-            transition: all 0.3s ease;
+        .user-menu .dropdown-item:hover {
+            background: rgba(102, 126, 234, 0.08);
         }
 
-        .btn-register:hover {
-            background: #357ABD;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
-        }
-
-        /* Hero Section */
+        /* Hero Section - Enhanced */
         .hero-section {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
@@ -182,6 +166,55 @@ $totalPages = ceil($collectNumRows / $limit);
             max-width: 600px;
         }
 
+        .hero-illustration {
+            position: relative;
+            z-index: 2;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .hero-icon-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .hero-icon-item {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .hero-icon-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .hero-icon-item i {
+            font-size: 3rem;
+            color: white;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .hero-icon-item span {
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: block;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
         .btn-cta {
             background: white;
             color: #667eea;
@@ -190,17 +223,24 @@ $totalPages = ceil($collectNumRows / $limit);
             font-weight: 600;
             font-size: 1.1rem;
             border: none;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            transition: all 0.3s ease;
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.35);
         }
 
         .btn-cta:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
-            color: #667eea;
+            box-shadow: 0 18px 36px rgba(102, 126, 234, 0.4);
         }
 
-        /* Approved Tasks Section */
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            box-shadow: 0 10px 24px rgba(118, 75, 162, 0.25);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5b70dd, #6b4295);
+        }
+
+        /* ...existing task card styles... */
         .tasks-section {
             padding: 80px 0;
             background: #f8f9fa;
@@ -234,6 +274,14 @@ $totalPages = ceil($collectNumRows / $limit);
             flex-direction: column;
             gap: 1.25rem;
             overflow: hidden;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .task-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 35px rgba(74, 144, 226, 0.2);
         }
 
         .task-card::after {
@@ -324,12 +372,6 @@ $totalPages = ceil($collectNumRows / $limit);
             background: rgba(102, 126, 234, 0.08);
         }
 
-        .btn-like.active {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: #fff;
-            border-color: transparent;
-        }
-
         .like-count {
             background: rgba(102, 126, 234, 0.12);
             color: #4A4A68;
@@ -361,101 +403,17 @@ $totalPages = ceil($collectNumRows / $limit);
             animation: bounceHorizontal 1.5s ease-in-out infinite;
         }
 
-        .task-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 35px rgba(74, 144, 226, 0.2);
-        }
-
         .task-card:hover .card-cta {
             background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
             border-color: rgba(102, 126, 234, 0.5);
         }
 
         @keyframes bounceHorizontal {
-            0%,
-            100% {
-                transform: translateX(0);
-            }
-
-            50% {
-                transform: translateX(5px);
-            }
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(5px); }
         }
 
-        /* About Section */
-        .about-section {
-            padding: 80px 0;
-            background: white;
-        }
-
-        .about-content {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .about-section p {
-            color: #666;
-            line-height: 1.8;
-            font-size: 1.1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .feature-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .feature-list li {
-            padding: 1rem 0;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            align-items: center;
-        }
-
-        .feature-list li:last-child {
-            border-bottom: none;
-        }
-
-        .feature-list i {
-            color: #4A90E2;
-            font-size: 1.5rem;
-            margin-right: 1rem;
-            min-width: 30px;
-        }
-
-        /* Footer */
-        .footer {
-            background: #2c3e50;
-            color: white;
-            padding: 3rem 0 1.5rem;
-        }
-
-        .footer-content {
-            text-align: center;
-        }
-
-        .social-icons {
-            margin: 2rem 0;
-        }
-
-        .social-icons a {
-            color: white;
-            font-size: 1.5rem;
-            margin: 0 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .social-icons a:hover {
-            color: #4A90E2;
-            transform: translateY(-3px);
-        }
-
-        .footer p {
-            margin: 0;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        /* pagination  */
+        /* Pagination */
         .pagination-modern .page-item {
             transition: transform 0.2s ease;
         }
@@ -483,10 +441,48 @@ $totalPages = ceil($collectNumRows / $limit);
             box-shadow: 0 8px 20px rgba(118, 75, 162, 0.25);
         }
 
-        .pagination-modern .page-item.disabled .page-link {
-            background: rgba(102, 126, 234, 0.06);
-            color: #bbb;
-            box-shadow: none;
+        /* Footer */
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 3rem 0 1.5rem;
+        }
+
+        .footer-content {
+            text-align: center;
+        }
+
+        .social-icons {
+            margin: 1.5rem 0;
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+
+        .social-icons a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            color: white;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .social-icons a:hover {
+            background: #4A90E2;
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(74, 144, 226, 0.4);
+        }
+
+        .footer p {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.95rem;
         }
 
         /* Animations */
@@ -495,7 +491,6 @@ $totalPages = ceil($collectNumRows / $limit);
                 opacity: 0;
                 transform: translateY(30px);
             }
-
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -507,47 +502,9 @@ $totalPages = ceil($collectNumRows / $limit);
             .hero-section h1 {
                 font-size: 2.5rem;
             }
-
-            .hero-section p {
-                font-size: 1.1rem;
-            }
-
             .section-title {
                 font-size: 2rem;
             }
-
-            .navbar-nav {
-                text-align: center;
-                padding: 1rem 0;
-            }
-
-            .btn-login,
-            .btn-register {
-                margin: 0.5rem 0;
-            }
-        }
-
-        .user-menu .user-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid rgba(102, 126, 234, 0.5);
-        }
-
-        .user-menu .dropdown-menu {
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-            border: none;
-            padding: 0.5rem 0;
-        }
-
-        .user-menu .dropdown-item {
-            font-weight: 500;
-        }
-
-        .user-menu .dropdown-item:hover {
-            background: rgba(102, 126, 234, 0.08);
         }
     </style>
 </head>
@@ -608,9 +565,31 @@ $totalPages = ceil($collectNumRows / $limit);
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-6 hero-content">
-                    <h1>Hello, <?php echo htmlspecialchars($userName); ?>!</h1>
-                    <p>Review the tasks you’ve created that are approved and visible to the community.</p>
-                    <a class="btn btn-cta" href="#tasks">View Your Approved Tasks</a>
+                    <h1>Hello, <?php echo htmlspecialchars($userName); ?>! 👋</h1>
+                    <p>Review and manage all your approved posts. Track engagement, views, and comments from the community.</p>
+                    <button class="btn btn-cta" onclick="document.getElementById('tasks').scrollIntoView({behavior: 'smooth'})">
+                        <i class="fas fa-arrow-down me-2"></i>View My Posts
+                    </button>
+                </div>
+                <div class="col-lg-6 hero-illustration">
+                    <div class="hero-icon-grid">
+                        <div class="hero-icon-item">
+                            <i class="fas fa-blog"></i>
+                            <span>My Posts</span>
+                        </div>
+                        <div class="hero-icon-item">
+                            <i class="fas fa-heart"></i>
+                            <span>Engagement</span>
+                        </div>
+                        <div class="hero-icon-item">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Analytics</span>
+                        </div>
+                        <div class="hero-icon-item">
+                            <i class="fas fa-trophy"></i>
+                            <span>Achievements</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -620,87 +599,73 @@ $totalPages = ceil($collectNumRows / $limit);
     <?php if (mysqli_num_rows($queryRun) > 0): ?>
         <section class="tasks-section" id="tasks">
             <div class="container">
-                <h2 class="section-title">🌟 Your Approved Posts</h2>
-                <p class="section-subtitle"><?php echo htmlspecialchars($userName); ?>, here are the approved tasks you’ve published.</p>
+                <h2 class="section-title">📝 Your Approved Posts</h2>
+                <p class="section-subtitle">Manage and track your published content</p>
 
-                <!-- Search/Filter Input (Frontend Only) -->
+                <!-- Filter -->
                 <form method="POST" class="row mb-4 justify-content-center" style="gap:10px;">
                     <div class="col-md-8 col-lg-6">
-                        <input type="text" name="filter_input" class="form-control form-control-lg" placeholder="Search/Filter Record" style="border-radius:8px;" value="<?php echo htmlspecialchars($filter_data); ?>">
+                        <input type="text" name="filter_input" class="form-control form-control-lg" placeholder="Search your posts..." value="<?php echo htmlspecialchars($filter_data); ?>">
                     </div>
                     <div class="col-auto">
-                        <button type="submit" class="btn btn-primary btn-lg" style="border-radius:8px;" name="filter_button">Filter Data</button>
+                        <button type="submit" class="btn btn-primary btn-lg" name="filter_button">
+                            <i class="fas fa-search me-2"></i>Search
+                        </button>
                     </div>
                 </form>
 
-
-
-               <div class="row">
+                <div class="row">
                     <?php while ($task = mysqli_fetch_assoc($queryRun)): ?>
                         <div class="col-lg-4 col-md-6">
                             <a href="post_detail.php?id=<?php echo $task['id']; ?>&ref=myposts" style="text-decoration: none; color: inherit;">
-                            <div class="task-card">
-                                <?php if (!empty($task['image'])): ?>
-                                    <div class="task-thumb">
-                                        <img class="task-image" src="<?php echo htmlspecialchars($task['image']); ?>" alt="Task Image">
-                                    </div>
-                                <?php else: ?>
-                                    <div class="task-thumb"><span class="task-placeholder">No Image</span></div>
-                                <?php endif; ?>
+                                <div class="task-card">
+                                    <?php if (!empty($task['image'])): ?>
+                                        <div class="task-thumb">
+                                            <img class="task-image" src="<?php echo htmlspecialchars($task['image']); ?>" alt="Task Image">
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="task-thumb"><span class="task-placeholder">No Image</span></div>
+                                    <?php endif; ?>
 
-                                <div class="task-body">
-                                    <h5><?php echo htmlspecialchars($task['status']); ?></h5>
-                                    <h5><?php echo htmlspecialchars($task['task_name']); ?></h5>
-                                    <p class="task-description">
-                                        <?php 
-                                            $description = htmlspecialchars($task['description']);
-                                            $words = explode(' ', $description);
-                                            if (count($words) > 30) {
-                                                echo implode(' ', array_slice($words, 0, 30)) . '...';
-                                            } else {
-                                                echo $description;
-                                            }
-                                        ?>
-                                    </p>
-                                    <div class="task-date"><i class="far fa-calendar"></i> <?php echo htmlspecialchars($task['created_at']); ?></div>
-
-                                    <!-- for likes  -->
-                                    <div class="like-action mt-2">
-                                        <?php
-                                            $task_id = $task['id'];
-                                            // Get total likes count for this task
-                                            $countQuery = "SELECT COUNT(*) AS total_likes FROM likes WHERE task_id = $task_id";
-                                            $countResult = mysqli_query($conn, $countQuery);
-                                            $countRow = mysqli_fetch_assoc($countResult);
-                                            $totalLikes = $countRow['total_likes'];
+                                    <div class="task-body">
+                                        <h5><?php echo htmlspecialchars($task['task_name']); ?></h5>
+                                        <p class="task-description">
+                                            <?php 
+                                                $description = htmlspecialchars($task['description']);
+                                                $words = explode(' ', $description);
+                                                echo (count($words) > 30) ? implode(' ', array_slice($words, 0, 30)) . '...' : $description;
                                             ?>
+                                        </p>
+                                        <div class="task-date"><i class="far fa-calendar"></i> <?php echo date('M d, Y', strtotime($task['created_at'])); ?></div>
 
-                                        <button type="button"
-                                            class="btn btn-like"
-                                            data-task-id="<?php echo $task['id']; ?>">
-                                            <i class="fa-regular fa-heart"></i>
-                                            <span> Like</span>
-                                        </button>
-                                        <span class="like-count">
-                                            <?php echo $totalLikes; ?> Likes
-                                        </span>
+                                        <div class="like-action mt-2">
+                                            <?php
+                                                $task_id = $task['id'];
+                                                $countQuery = "SELECT COUNT(*) AS total_likes FROM likes WHERE task_id = $task_id";
+                                                $countResult = mysqli_query($conn, $countQuery);
+                                                $countRow = mysqli_fetch_assoc($countResult);
+                                                $totalLikes = $countRow['total_likes'];
+                                            ?>
+                                            <button type="button" class="btn btn-like" data-task-id="<?php echo $task['id']; ?>">
+                                                <i class="fa-regular fa-heart"></i>
+                                                <span>Like</span>
+                                            </button>
+                                            <span class="like-count"><?php echo $totalLikes; ?> Likes</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="card-cta">
+                                        <i class="fas fa-arrow-right"></i>
+                                        <span>View details & comments</span>
                                     </div>
                                 </div>
-
-                                <!-- Call to Action -->
-                                <div class="card-cta">
-                                    <i class="fas fa-arrow-right"></i>
-                                    <span>Click to view full details & comments</span>
-                                </div>
-
-                            </div>
                             </a>
                         </div>
                     <?php endwhile; ?>
                 </div>
 
-                <!-- Pagination Frontend -->
-                <?php if ($totalPages): ?>
+                <!-- Pagination -->
+                <?php if ($totalPages > 1): ?>
                     <nav aria-label="Task Pagination">
                         <ul class="pagination pagination-modern justify-content-center mt-4">
                             <?php for ($i = 1; $i <= $totalPages; $i++) { ?>
@@ -713,101 +678,42 @@ $totalPages = ceil($collectNumRows / $limit);
                             <?php } ?>
                         </ul>
                     </nav>
-                <?php else: ?>
-                    <div class="task-thumb">
-                        <span class="task-placeholder">No Image</span>
-                    </div>
                 <?php endif; ?>
-
-
             </div>
         </section>
     <?php else: ?>
         <section class="tasks-section" id="tasks">
-            <div class="container">
-                <h2 class="section-title">No Approved Tasks</h2>
-                <p class="section-subtitle">You don’t have any approved tasks yet.</p>
+            <div class="container text-center py-5">
+                <div style="font-size: 80px; color: #ddd;">
+                    <i class="fas fa-inbox"></i>
+                </div>
+                <h2 class="section-title mt-4">No Approved Posts Yet</h2>
+                <p class="section-subtitle">Create your first post and get it approved to see it here!</p>
+                <a href="index.php" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus-circle me-2"></i>Create Post
+                </a>
             </div>
         </section>
     <?php endif; ?>
-
-    <!-- About Section -->
-    <section class="about-section" id="about">
-        <div class="container">
-            <h2 class="section-title">About TaskFlow</h2>
-            <p class="section-subtitle">Simple, powerful task management for everyone</p>
-
-            <div class="about-content">
-                <p>TaskFlow is a modern task management platform designed to help individuals and teams stay organized and productive. Our intuitive interface makes it easy to create, track, and complete tasks efficiently.</p>
-
-                <p>Whether you're managing personal projects or collaborating with a team, TaskFlow provides the tools you need to succeed. Our approval system ensures quality and accountability in every task.</p>
-
-                <ul class="feature-list">
-                    <li>
-                        <i class="fas fa-check-circle"></i>
-                        <span><strong>Easy Task Creation:</strong> Create and organize tasks with just a few clicks</span>
-                    </li>
-                    <li>
-                        <i class="fas fa-users"></i>
-                        <span><strong>Team Collaboration:</strong> Work together seamlessly with your team members</span>
-                    </li>
-                    <li>
-                        <i class="fas fa-shield-alt"></i>
-                        <span><strong>Approval System:</strong> Built-in approval workflow for quality assurance</span>
-                    </li>
-                    <li>
-                        <i class="fas fa-chart-line"></i>
-                        <span><strong>Progress Tracking:</strong> Monitor your productivity and track completion rates</span>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </section>
 
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
             <div class="footer-content">
                 <div class="social-icons">
-                    <a href="#"><i class="fab fa-facebook"></i></a>
-                    <a href="#"><i class="fab fa-twitter"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
-                    <a href="#"><i class="fab fa-linkedin"></i></a>
+                    <a href="https://facebook.com" target="_blank" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="https://twitter.com" target="_blank" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="https://instagram.com" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="https://linkedin.com" target="_blank" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="https://github.com" target="_blank" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                    <a href="https://youtube.com" target="_blank" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
                 </div>
                 <p>&copy; 2025 TaskFlow. All rights reserved.</p>
             </div>
         </div>
     </footer>
 
-    <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
-
-    <script>
-        // Smooth scrolling for navigation links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
-
-        // Navbar background on scroll
-        window.addEventListener('scroll', function() {
-            const navbar = document.querySelector('.navbar');
-            if (window.scrollY > 50) {
-                navbar.style.background = 'rgba(255, 255, 255, 1)';
-            } else {
-                navbar.style.background = 'rgba(255, 255, 255, 0.98)';
-            }
-        });
-    </script>
-
 </body>
 
 </html>
