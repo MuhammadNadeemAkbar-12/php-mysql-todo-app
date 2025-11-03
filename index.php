@@ -133,6 +133,7 @@ $totalPages = ceil($totalTasks / $limit);
 //         $stmt = $conn->prepare("UPDATE tasks SET task_name = ?, description = ? WHERE id = ? AND user_id = ?");
 //         $stmt->bind_param("ssii", $edit_task_name, $edit_description, $edit_id, $user_id);
 //         $stmt->execute();
+
 //         $stmt->close();
 
 //         header("Location: index.php");
@@ -544,6 +545,7 @@ if (isset($_POST['mark_read'])) {
 									<i class="fas fa-chevron-left"></i>
 								</a>
 							</li>
+							
 
 							<!-- Page Numbers -->
 							<?php for ($i = 1; $i <= $totalPages; $i++): ?>

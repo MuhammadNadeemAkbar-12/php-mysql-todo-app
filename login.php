@@ -6,6 +6,7 @@ include 'db_connect.php';
 $errorMsg = ''; 
 
 
+;
 
 
 if (isset($_POST['login'])) {
@@ -40,10 +41,14 @@ if (isset($_POST['login'])) {
                 $_SESSION['user_name'] = $row['name'];
                 $_SESSION['user_role'] = $row['role'];
  
-                if($row['role'] == 'admin') {
+                if($row['role'] == 'superadmin') {
+                   header("Location: superadmin.php");
+                    exit;
+                }elseif($row['role'] == 'admin') {
                    header("Location: admin-dashboard.php");
                     exit;
-                }else{
+                }
+                else{
                     header("Location: homepage.php");
                     exit;
                 }
