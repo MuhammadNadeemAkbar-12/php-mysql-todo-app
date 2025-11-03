@@ -268,9 +268,12 @@ $totalPages = ceil($collectNumRows / $limit);
         }
 
         @keyframes float {
-            0%, 100% {
+
+            0%,
+            100% {
                 transform: translateY(0);
             }
+
             50% {
                 transform: translateY(-20px);
             }
@@ -551,9 +554,12 @@ $totalPages = ceil($collectNumRows / $limit);
         }
 
         @keyframes bounceHorizontal {
-            0%, 100% {
+
+            0%,
+            100% {
                 transform: translateX(0);
             }
+
             50% {
                 transform: translateX(5px);
             }
@@ -803,10 +809,28 @@ $totalPages = ceil($collectNumRows / $limit);
                             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
                                 <span class="fw-semibold"><?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
+                            <!-- <ul class="dropdown-menu dropdown-menu-end">
                                 <li><a class="dropdown-item" href="<?php echo ($_SESSION['user_role'] === 'admin') ? 'admin-dashboard.php' : 'index.php'; ?>">Dashboard</a></li>
                                 <li><a class="dropdown-item" href="homepage.php?logout=1">Logout</a></li>
+                            </ul> -->
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="
+            <?php
+                        if ($_SESSION['user_role'] === 'superadmin') {
+                            echo 'superadmin.php';
+                        } elseif ($_SESSION['user_role'] === 'admin') {
+                            echo 'admin-dashboard.php';
+                        } else {
+                            echo 'index.php';
+                        }
+            ?>">
+                                        Dashboard
+                                    </a>
+                                </li>
+                                <li><a class="dropdown-item" href="homepage.php?logout=1">Logout</a></li>
                             </ul>
+
                         </li>
                     <?php else: ?>
                         <li class="nav-item"><a class="nav-link btn-login" href="login.php">Login</a></li>
@@ -819,46 +843,46 @@ $totalPages = ceil($collectNumRows / $limit);
 
     <!-- Hero Section -->
     <section class="hero-section" id="home">
-	<div class="container">
-		<div class="row align-items-center">
-			<div class="col-lg-6 hero-content">
-				<h1>Manage Your Tasks Easily</h1>
-				<p>Stay organized and boost your productivity with our intuitive task management platform. Track, manage, and complete tasks efficiently.</p>
-				<button class="btn btn-cta" onclick="document.getElementById('tasks').scrollIntoView({behavior: 'smooth'})">
-					<i class="fas fa-rocket me-2"></i>Get Started
-				</button>
-			</div>
-			<div class="col-lg-6 hero-illustration">
-				<div class="hero-icon-grid">
-					<div class="hero-icon-item">
-						<i class="fas fa-clipboard-list"></i>
-						<span>Organize</span>
-					</div>
-					<div class="hero-icon-item">
-						<i class="fas fa-check-circle"></i>
-						<span>Complete</span>
-					</div>
-					<div class="hero-icon-item">
-						<i class="fas fa-users"></i>
-						<span>Collaborate</span>
-					</div>
-					<div class="hero-icon-item">
-						<i class="fas fa-chart-line"></i>
-						<span>Track</span>
-					</div>
-					<div class="hero-icon-item">
-						<i class="fas fa-bell"></i>
-						<span>Notify</span>
-					</div>
-					<div class="hero-icon-item">
-						<i class="fas fa-trophy"></i>
-						<span>Achieve</span>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-</section>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 hero-content">
+                    <h1>Manage Your Tasks Easily</h1>
+                    <p>Stay organized and boost your productivity with our intuitive task management platform. Track, manage, and complete tasks efficiently.</p>
+                    <button class="btn btn-cta" onclick="document.getElementById('tasks').scrollIntoView({behavior: 'smooth'})">
+                        <i class="fas fa-rocket me-2"></i>Get Started
+                    </button>
+                </div>
+                <div class="col-lg-6 hero-illustration">
+                    <div class="hero-icon-grid">
+                        <div class="hero-icon-item">
+                            <i class="fas fa-clipboard-list"></i>
+                            <span>Organize</span>
+                        </div>
+                        <div class="hero-icon-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Complete</span>
+                        </div>
+                        <div class="hero-icon-item">
+                            <i class="fas fa-users"></i>
+                            <span>Collaborate</span>
+                        </div>
+                        <div class="hero-icon-item">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Track</span>
+                        </div>
+                        <div class="hero-icon-item">
+                            <i class="fas fa-bell"></i>
+                            <span>Notify</span>
+                        </div>
+                        <div class="hero-icon-item">
+                            <i class="fas fa-trophy"></i>
+                            <span>Achieve</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- Approved Tasks -->
     <?php if (mysqli_num_rows($queryRun) > 0): ?>
@@ -880,30 +904,30 @@ $totalPages = ceil($collectNumRows / $limit);
                     <?php while ($task = mysqli_fetch_assoc($queryRun)): ?>
                         <div class="col-lg-4 col-md-6">
                             <a href="post_detail.php?id=<?php echo $task['id']; ?>&ref=homepage" style="text-decoration: none; color: inherit;">
-                            <div class="task-card">
-                                <?php 
-                                // Check if this post belongs to the logged-in user
-                                if (isset($_SESSION['user_id']) && $task['user_id'] == $_SESSION['user_id']): 
-                                ?>
-                                    <div class="your-post-badge">
-                                        <i class="fas fa-user-check"></i>
-                                        <span>Your Post</span>
-                                    </div>
-                                <?php endif; ?>
+                                <div class="task-card">
+                                    <?php
+                                    // Check if this post belongs to the logged-in user
+                                    if (isset($_SESSION['user_id']) && $task['user_id'] == $_SESSION['user_id']):
+                                    ?>
+                                        <div class="your-post-badge">
+                                            <i class="fas fa-user-check"></i>
+                                            <span>Your Post</span>
+                                        </div>
+                                    <?php endif; ?>
 
-                                <?php if (!empty($task['image'])): ?>
-                                    <div class="task-thumb">
-                                        <img class="task-image" src="<?php echo htmlspecialchars($task['image']); ?>" alt="Task Image">
-                                    </div>
-                                <?php else: ?>
-                                    <div class="task-thumb"><span class="task-placeholder">No Image</span></div>
-                                <?php endif; ?>
+                                    <?php if (!empty($task['image'])): ?>
+                                        <div class="task-thumb">
+                                            <img class="task-image" src="<?php echo htmlspecialchars($task['image']); ?>" alt="Task Image">
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="task-thumb"><span class="task-placeholder">No Image</span></div>
+                                    <?php endif; ?>
 
-                                <div class="task-body">
-                                    <h5><?php echo htmlspecialchars($task['status']); ?></h5>
-                                    <h5><?php echo htmlspecialchars($task['task_name']); ?></h5>
-                                    <p class="task-description">
-                                        <?php 
+                                    <div class="task-body">
+                                        <h5><?php echo htmlspecialchars($task['status']); ?></h5>
+                                        <h5><?php echo htmlspecialchars($task['task_name']); ?></h5>
+                                        <p class="task-description">
+                                            <?php
                                             $description = htmlspecialchars($task['description']);
                                             $words = explode(' ', $description);
                                             if (count($words) > 30) {
@@ -911,13 +935,13 @@ $totalPages = ceil($collectNumRows / $limit);
                                             } else {
                                                 echo $description;
                                             }
-                                        ?>
-                                    </p>
-                                    <div class="task-date"><i class="far fa-calendar"></i> <?php echo htmlspecialchars($task['created_at']); ?></div>
+                                            ?>
+                                        </p>
+                                        <div class="task-date"><i class="far fa-calendar"></i> <?php echo htmlspecialchars($task['created_at']); ?></div>
 
-                                    <!-- for likes  -->
-                                    <div class="like-action mt-2">
-                                        <?php
+                                        <!-- for likes  -->
+                                        <div class="like-action mt-2">
+                                            <?php
                                             $task_id = $task['id'];
                                             // Get total comments count for this task
                                             $countQuery = "SELECT COUNT(*) AS total_likes FROM likes WHERE task_id = $task_id";
@@ -926,28 +950,28 @@ $totalPages = ceil($collectNumRows / $limit);
                                             $totalLikes = $countRow['total_likes'];
                                             ?>
 
-                                        <button type="button"
-                                            class="btn btn-like"
-                                            data-task-id="<?php echo $task['id']; ?>">
-                                            <i class="fa-regular fa-heart"></i>
-                                            <span> Like</span>
-                                        </button>
-                                        <span class="like-count">
-                                            <?php echo $totalLikes; ?> Likes
-                                        </span>
+                                            <button type="button"
+                                                class="btn btn-like"
+                                                data-task-id="<?php echo $task['id']; ?>">
+                                                <i class="fa-regular fa-heart"></i>
+                                                <span> Like</span>
+                                            </button>
+                                            <span class="like-count">
+                                                <?php echo $totalLikes; ?> Likes
+                                            </span>
+                                        </div>
+
+                                        <!-- Comments Section -->
+
                                     </div>
 
-                                    <!-- Comments Section -->
-                                   
-                                </div>
+                                    <!-- Call to Action -->
+                                    <div class="card-cta">
+                                        <i class="fas fa-arrow-right"></i>
+                                        <span>Click to view full details & comments</span>
+                                    </div>
 
-                                <!-- Call to Action -->
-                                <div class="card-cta">
-                                    <i class="fas fa-arrow-right"></i>
-                                    <span>Click to view full details & comments</span>
                                 </div>
-
-                            </div>
                             </a>
                         </div>
                     <?php endwhile; ?>
@@ -981,136 +1005,136 @@ $totalPages = ceil($collectNumRows / $limit);
 
     <!-- Features Section -->
     <section class="features-section">
-	<div class="container">
-		<h2 class="section-title">✨ Why Choose TaskFlow?</h2>
-		<p class="section-subtitle">Powerful features to help you stay productive</p>
-		<div class="row g-4 mt-4">
-			<div class="col-lg-4 col-md-6">
-				<div class="feature-card">
-					<div class="feature-icon">
-						<i class="fas fa-bolt"></i>
-					</div>
-					<h4>Lightning Fast</h4>
-					<p>Quick and responsive interface that helps you manage tasks without delay</p>
-				</div>
-			</div>
-			<div class="col-lg-4 col-md-6">
-				<div class="feature-card">
-					<div class="feature-icon">
-						<i class="fas fa-shield-alt"></i>
-					</div>
-					<h4>Secure & Reliable</h4>
-					<p>Your data is protected with enterprise-grade security measures</p>
-				</div>
-			</div>
-			<div class="col-lg-4 col-md-6">
-				<div class="feature-card">
-					<div class="feature-icon">
-						<i class="fas fa-mobile-alt"></i>
-					</div>
-					<h4>Fully Responsive</h4>
-					<p>Access your tasks anytime, anywhere on any device</p>
-				</div>
-			</div>
-			<div class="col-lg-4 col-md-6">
-				<div class="feature-card">
-					<div class="feature-icon">
-						<i class="fas fa-palette"></i>
-					</div>
-					<h4>Beautiful Design</h4>
-					<p>Modern and intuitive interface that makes task management enjoyable</p>
-				</div>
-			</div>
-			<div class="col-lg-4 col-md-6">
-				<div class="feature-card">
-					<div class="feature-icon">
-						<i class="fas fa-sync-alt"></i>
-					</div>
-					<h4>Real-time Sync</h4>
-					<p>All your tasks synced instantly across all platforms</p>
-				</div>
-			</div>
-			<div class="col-lg-4 col-md-6">
-				<div class="feature-card">
-					<div class="feature-icon">
-						<i class="fas fa-headset"></i>
-					</div>
-					<h4>24/7 Support</h4>
-					<p>Our dedicated team is always here to help you succeed</p>
-				</div>
-			</div>
-		</div>
-	</div>
-</section>
+        <div class="container">
+            <h2 class="section-title">✨ Why Choose TaskFlow?</h2>
+            <p class="section-subtitle">Powerful features to help you stay productive</p>
+            <div class="row g-4 mt-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <h4>Lightning Fast</h4>
+                        <p>Quick and responsive interface that helps you manage tasks without delay</p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h4>Secure & Reliable</h4>
+                        <p>Your data is protected with enterprise-grade security measures</p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <h4>Fully Responsive</h4>
+                        <p>Access your tasks anytime, anywhere on any device</p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-palette"></i>
+                        </div>
+                        <h4>Beautiful Design</h4>
+                        <p>Modern and intuitive interface that makes task management enjoyable</p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-sync-alt"></i>
+                        </div>
+                        <h4>Real-time Sync</h4>
+                        <p>All your tasks synced instantly across all platforms</p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-headset"></i>
+                        </div>
+                        <h4>24/7 Support</h4>
+                        <p>Our dedicated team is always here to help you succeed</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- Stats Section -->
     <section class="stats-section">
-	<div class="container">
-		<div class="row">
-			<div class="col-md-3 col-6">
-				<div class="stat-item">
-					<span class="stat-number">
-						<i class="fas fa-users"></i> <?php echo $collectNumRows; ?>+
-					</span>
-					<span class="stat-label">Active Posts</span>
-				</div>
-			</div>
-			<div class="col-md-3 col-6">
-				<div class="stat-item">
-					<span class="stat-number">
-						<i class="fas fa-check-circle"></i> 100%
-					</span>
-					<span class="stat-label">Success Rate</span>
-				</div>
-			</div>
-			<div class="col-md-3 col-6">
-				<div class="stat-item">
-					<span class="stat-number">
-						<i class="fas fa-clock"></i> 24/7
-					</span>
-					<span class="stat-label">Availability</span>
-				</div>
-			</div>
-			<div class="col-md-3 col-6">
-				<div class="stat-item">
-					<span class="stat-number">
-						<i class="fas fa-heart"></i> 99%
-					</span>
-					<span class="stat-label">Satisfaction</span>
-				</div>
-			</div>
-		</div>
-	</div>
-</section>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3 col-6">
+                    <div class="stat-item">
+                        <span class="stat-number">
+                            <i class="fas fa-users"></i> <?php echo $collectNumRows; ?>+
+                        </span>
+                        <span class="stat-label">Active Posts</span>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-item">
+                        <span class="stat-number">
+                            <i class="fas fa-check-circle"></i> 100%
+                        </span>
+                        <span class="stat-label">Success Rate</span>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-item">
+                        <span class="stat-number">
+                            <i class="fas fa-clock"></i> 24/7
+                        </span>
+                        <span class="stat-label">Availability</span>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-item">
+                        <span class="stat-number">
+                            <i class="fas fa-heart"></i> 99%
+                        </span>
+                        <span class="stat-label">Satisfaction</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- Footer -->
     <footer class="footer">
-	<div class="container">
-		<div class="footer-content">
-			<div class="social-icons">
-				<a href="https://facebook.com" target="_blank" aria-label="Facebook" title="Facebook">
-					<i class="fab fa-facebook-f"></i>
-				</a>
-				<a href="https://twitter.com" target="_blank" aria-label="Twitter" title="Twitter">
-					<i class="fab fa-twitter"></i>
-				</a>
-				<a href="https://instagram.com" target="_blank" aria-label="Instagram" title="Instagram">
-					<i class="fab fa-instagram"></i>
-				</a>
-				<a href="https://linkedin.com" target="_blank" aria-label="LinkedIn" title="LinkedIn">
-					<i class="fab fa-linkedin-in"></i>
-				</a>
-				<a href="https://github.com" target="_blank" aria-label="GitHub" title="GitHub">
-					<i class="fab fa-github"></i>
-				</a>
-				<a href="https://youtube.com" target="_blank" aria-label="YouTube" title="YouTube">
-					<i class="fab fa-youtube"></i>
-				</a>
-			</div>
-			<p>&copy; 2025 TaskFlow. All rights reserved.</p>
-		</div>
-	</div>
-</footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="social-icons">
+                    <a href="https://facebook.com" target="_blank" aria-label="Facebook" title="Facebook">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="https://twitter.com" target="_blank" aria-label="Twitter" title="Twitter">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="https://instagram.com" target="_blank" aria-label="Instagram" title="Instagram">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <a href="https://linkedin.com" target="_blank" aria-label="LinkedIn" title="LinkedIn">
+                        <i class="fab fa-linkedin-in"></i>
+                    </a>
+                    <a href="https://github.com" target="_blank" aria-label="GitHub" title="GitHub">
+                        <i class="fab fa-github"></i>
+                    </a>
+                    <a href="https://youtube.com" target="_blank" aria-label="YouTube" title="YouTube">
+                        <i class="fab fa-youtube"></i>
+                    </a>
+                </div>
+                <p>&copy; 2025 TaskFlow. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
 
     <!-- JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>

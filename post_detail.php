@@ -603,6 +603,7 @@ $totalComments = $CommentRow['total_comments'];
                                                  <input type="hidden" name="task_id" value="<?php echo $task['id']; ?>">
                                                  <div class="input-group">
                                                         <input type="text" name="comment_text" class="form-control" placeholder="Write a comment..." required>
+                                                        
                                                         <button class="btn" type="submit" name="add_comment"><i class="fas fa-paper-plane"></i></button>
                                                  </div>
                                           </form>

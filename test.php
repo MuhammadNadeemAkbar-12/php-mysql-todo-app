@@ -58,13 +58,44 @@
 
 // for comments 
 
-$task_id = $task['id'];
-$commentQuery = "SELECT c.comment_text, u.name FROM comments c JOIN users u ON c.user_id = u.id WHERE c.task_id = $task_id ORDER BY c.created_at DESC";
-$commentRun = mysqli_query($conn, $commentQuery); 
-if (mysqli_num_rows($commentRun) > 0) {
-    while ($comment = mysqli_fetch_assoc($commentRun)) {
-        echo '<div class="comment"><strong>' . htmlspecialchars($comment['name']) . ':</strong> ' . htmlspecialchars($comment['comment_text']) . '</div>';
-    }
+// $task_id = $task['id'];
+// $commentQuery = "SELECT c.comment_text, u.name FROM comments c JOIN users u ON c.user_id = u.id WHERE c.task_id = $task_id ORDER BY c.created_at DESC";
+// $commentRun = mysqli_query($conn, $commentQuery); 
+// if (mysqli_num_rows($commentRun) > 0) {
+//     while ($comment = mysqli_fetch_assoc($commentRun)) {
+//         echo '<div class="comment"><strong>' . htmlspecialchars($comment['name']) . ':</strong> ' . htmlspecialchars($comment['comment_text']) . '</div>';
+//     }
+// } else {
+//     echo '<p class="text-muted small">No comments yet. Be the first to comment!</p>';
+// }
+
+
+
+
+include 'db_connect.php';
+
+$name = 'Super Admin';
+$email = 'superadmin@gmail.com'; 
+$password = '112233'; 
+$hashed_password = password_hash($password, PASSWORD_DEFAULT);
+$role = 'superadmin';
+$created_at = date('Y-m-d H:i:s'); 
+
+$adminquery = "INSERT INTO users (name, email, password, role, created_at) VALUES (?, ?, ?, ?, ?)";
+$adminstmt = $conn->prepare($adminquery);
+$adminstmt->bind_param("sssss", $name, $email, $hashed_password, $role, $created_at);
+
+if ($adminstmt->execute()) {
+    echo "Super admin created successfully!";
 } else {
-    echo '<p class="text-muted small">No comments yet. Be the first to comment!</p>';
+    echo "Error: " . $conn->error;
 }
+
+$adminstmt->close();
+$conn->close();
+?>
+
+
+
+
+?>
