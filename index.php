@@ -93,7 +93,7 @@ if (isset($_POST['add_task'])) {
         $admin_id = $adminRow['id'];
 
         // Prepare notification message
-        $notif_message = "New post submitted by " . htmlspecialchars($user_name) . " (User ID: $user_id), waiting for approval.";
+        $notif_message = "New post submitted by " . htmlspecialchars($user_name) . " waiting for approval.";
 
         //  Insert notification for admin
         $stmt_notif = $conn->prepare("INSERT INTO notifications (user_id, message) VALUES (?, ?)");
@@ -210,6 +210,11 @@ if (isset($_POST['mark_read'])) {
     header("Location: index.php");
     exit;
 }
+
+
+
+
+
 
 ?>
 

@@ -1,17 +1,14 @@
 <?php
-session_start(); 
-include 'db_connect.php'; 
+session_start();
+include 'db_connect.php';
 
 
-$errorMsg = ''; 
-
-
-;
+$errorMsg = '';;
 
 
 if (isset($_POST['login'])) {
     $email = trim($_POST['email']);
-    $password = $_POST['password'];    
+    $password = $_POST['password'];
     $errors = [];
 
     // Validation checks
@@ -33,22 +30,32 @@ if (isset($_POST['login'])) {
     } else {
         $sql = "SELECT * FROM users WHERE email = '$email'";
         $result = mysqli_query($conn, $sql);
-        // print_r($result);
         $row = mysqli_fetch_assoc($result);
+
         if ($row) {
-             if (password_verify($password, $row['password'])) {
+            // echo "<script>alert('{$row['status']}');</script>"; 
+
+            if (password_verify($password, $row['password'])) {
+                // Check account status first
+                if ($row['status'] == 'inactive') {
+                    echo "<script>alert('Your account is deactivated. Please contact Super Admin.');</script>";
+                    echo "<script>window.location.href='login.php';</script>";
+                    exit;
+                }
+
+                // Store session values
                 $_SESSION['user_id'] = $row['id'];
                 $_SESSION['user_name'] = $row['name'];
                 $_SESSION['user_role'] = $row['role'];
- 
-                if($row['role'] == 'superadmin') {
-                   header("Location: superadmin.php");
+
+                // Redirect by role
+                if ($row['role'] == 'superadmin') {
+                    header("Location: superadmin.php");
                     exit;
-                }elseif($row['role'] == 'admin') {
-                   header("Location: admin-dashboard.php");
+                } elseif ($row['role'] == 'admin') {
+                    header("Location: admin-dashboard.php");
                     exit;
-                }
-                else{
+                } else {
                     header("Location: homepage.php");
                     exit;
                 }
@@ -64,6 +71,7 @@ if (isset($_POST['login'])) {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -74,25 +82,29 @@ if (isset($_POST['login'])) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body.auth-body {
-            background: radial-gradient(60% 120% at 15% 20%, rgba(255,255,255,0.18), transparent 55%), radial-gradient(50% 90% at 85% 80%, rgba(255,255,255,0.12), transparent 65%), linear-gradient(135deg, #3c28ff, #ff3cb4);
+            background: radial-gradient(60% 120% at 15% 20%, rgba(255, 255, 255, 0.18), transparent 55%), radial-gradient(50% 90% at 85% 80%, rgba(255, 255, 255, 0.12), transparent 65%), linear-gradient(135deg, #3c28ff, #ff3cb4);
             font-family: 'Poppins', sans-serif;
         }
+
         .auth-card {
             max-width: 920px;
             border-radius: 32px;
         }
+
         .gradient-panel {
             background: linear-gradient(135deg, #5b3dff, #a829ff);
             position: relative;
         }
+
         .gradient-panel::before,
         .gradient-panel::after {
             content: '';
             position: absolute;
             border-radius: 50%;
-            background: rgba(255,255,255,0.18);
+            background: rgba(255, 255, 255, 0.18);
             filter: blur(0);
         }
+
         .gradient-panel::before {
             width: 160px;
             height: 160px;
@@ -100,6 +112,7 @@ if (isset($_POST['login'])) {
             right: -40px;
             opacity: 0.5;
         }
+
         .gradient-panel::after {
             width: 120px;
             height: 120px;
@@ -107,12 +120,14 @@ if (isset($_POST['login'])) {
             left: -30px;
             opacity: 0.35;
         }
+
         .icon-circle {
             width: 56px;
             height: 56px;
-            background: rgba(255,255,255,0.16);
-            box-shadow: 0 18px 35px rgba(0,0,0,0.12);
+            background: rgba(255, 255, 255, 0.16);
+            box-shadow: 0 18px 35px rgba(0, 0, 0, 0.12);
         }
+
         .feature-bullet {
             width: 10px;
             height: 10px;
@@ -120,22 +135,35 @@ if (isset($_POST['login'])) {
             display: inline-block;
             margin-right: 10px;
         }
-        .feature-bullet.pink { background: #ff9bcf; }
-        .feature-bullet.green { background: #4ef3c7; }
-        .feature-bullet.blue { background: #6be0ff; }
+
+        .feature-bullet.pink {
+            background: #ff9bcf;
+        }
+
+        .feature-bullet.green {
+            background: #4ef3c7;
+        }
+
+        .feature-bullet.blue {
+            background: #6be0ff;
+        }
+
         .input-group-text {
             background: transparent;
             border-right: none;
             color: #744bff;
         }
+
         .input-group .form-control {
             border-left: none;
             padding: 0.75rem 1rem;
             border-radius: 0 16px 16px 0;
         }
+
         .input-group .form-control:focus {
-            box-shadow: 0 0 0 0.25rem rgba(117,76,255,0.15);
+            box-shadow: 0 0 0 0.25rem rgba(117, 76, 255, 0.15);
         }
+
         .btn-login {
             border: none;
             border-radius: 18px;
@@ -145,11 +173,13 @@ if (isset($_POST['login'])) {
             font-weight: 600;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
+
         .btn-login:hover {
             transform: translateY(-2px);
-            box-shadow: 0 12px 24px rgba(107,73,255,0.35);
+            box-shadow: 0 12px 24px rgba(107, 73, 255, 0.35);
             color: #fff;
         }
+
         .small-divider {
             display: inline-block;
             position: relative;
@@ -158,6 +188,7 @@ if (isset($_POST['login'])) {
             font-size: 0.85rem;
             font-weight: 500;
         }
+
         .small-divider::before,
         .small-divider::after {
             content: '';
@@ -165,32 +196,44 @@ if (isset($_POST['login'])) {
             top: 50%;
             width: 46px;
             height: 1px;
-            background: rgba(0,0,0,0.08);
+            background: rgba(0, 0, 0, 0.08);
         }
-        .small-divider::before { left: -46px; }
-        .small-divider::after { right: -46px; }
+
+        .small-divider::before {
+            left: -46px;
+        }
+
+        .small-divider::after {
+            right: -46px;
+        }
+
         .social-btn {
             border-radius: 14px;
             padding: 0.7rem 1rem;
             font-weight: 500;
             color: #4a4b57;
-            border: 1px solid rgba(0,0,0,0.08);
+            border: 1px solid rgba(0, 0, 0, 0.08);
             background: #fff;
         }
+
         .social-btn:hover {
-            background: rgba(101,72,255,0.08);
+            background: rgba(101, 72, 255, 0.08);
             color: #4a4b57;
         }
+
         .auth-footer {
             text-align: center;
         }
+
         .auth-footer .signup-link {
             color: #5b3dff;
             font-weight: 600;
         }
+
         .auth-footer .signup-link:hover {
             text-decoration: underline;
         }
+
         .back-link {
             color: #8b8c92;
             font-weight: 500;
@@ -199,18 +242,22 @@ if (isset($_POST['login'])) {
             gap: 0.5rem;
             transition: color 0.2s ease;
         }
+
         .back-link:hover {
             color: #5b3dff;
         }
+
         @media (max-width: 991.98px) {
             .gradient-panel {
                 padding: 3rem 2.5rem !important;
                 text-align: center;
             }
+
             .gradient-panel .feature-bullet {
                 margin-right: 6px;
             }
         }
+
         @media (max-width: 575.98px) {
             .auth-card {
                 border-radius: 26px;
@@ -218,6 +265,7 @@ if (isset($_POST['login'])) {
         }
     </style>
 </head>
+
 <body class="auth-body">
     <div class="auth-wrapper d-flex align-items-center justify-content-center min-vh-100 px-3 px-lg-0">
         <div class="auth-card row g-0 shadow-lg overflow-hidden bg-white">
@@ -227,7 +275,7 @@ if (isset($_POST['login'])) {
                         <i class="fas fa-check fs-4"></i>
                     </div>
                     <h2 class="fw-bold mb-2">Task Manager</h2>
-                    
+
                     <h4 class="fw-semibold mb-4">Welcome Back!</h4>
                     <p class="mb-4 opacity-75">
                         Stay on top of your tasks, monitor progress, and keep your productivity high with your personal task hub.
@@ -314,4 +362,5 @@ if (isset($_POST['login'])) {
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>
