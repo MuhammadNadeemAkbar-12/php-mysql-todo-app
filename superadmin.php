@@ -131,7 +131,6 @@ if ($userResult && mysqli_num_rows($userResult) > 0) {
     }
 }
 
-
 // Handle Task Delete (Super Admin)
 if (isset($_GET['delete_id'])) {
     $delete_id = intval($_GET['delete_id']);
@@ -149,7 +148,7 @@ if (isset($_GET['delete_id'])) {
 }
 
 // Pagination for Pending Users
-$users_per_page = 2;
+$users_per_page = 3;
 $current_user_page = isset($_GET['user_page']) ? max(1, intval($_GET['user_page'])) : 1;
 $user_offset = ($current_user_page - 1) * $users_per_page;
 
@@ -179,8 +178,32 @@ LIMIT $users_per_page OFFSET $user_offset";
 $pendingUsersResult = mysqli_query($conn, $pendingUsersQuery);
 
 
-// Fetch all admins from the users table
-$admin_list = "SELECT id, name, email, created_at, role FROM users WHERE role = 'admin'";
+// Fetch all admins from the users table WITH PAGINATION
+// Step 1: Set how many admins per page (3 admins)
+$admins_per_page = 3;
+
+// Step 2: Get current page number from URL, default to page 1
+$current_admin_page = isset($_GET['admin_page']) ? max(1, intval($_GET['admin_page'])) : 1;
+
+// Step 3: Calculate offset (skip kitne records)
+// Example: Page 1 = offset 0, Page 2 = offset 3, Page 3 = offset 6
+$admin_offset = ($current_admin_page - 1) * $admins_per_page;
+
+// Step 4: Count total admins (to calculate total pages)
+$count_admins_query = "SELECT COUNT(*) AS total FROM users WHERE role = 'admin'";
+$count_admins_result = mysqli_query($conn, $count_admins_query);
+$total_admins = mysqli_fetch_assoc($count_admins_result)['total'];
+
+// Step 5: Calculate total pages
+// Example: 10 admins / 3 per page = 4 pages (ceiling rounds up)
+$total_admin_pages = ceil($total_admins / $admins_per_page);
+
+// Step 6: Fetch only admins for current page using LIMIT and OFFSET
+$admin_list = "SELECT id, name, email, created_at, role, status 
+               FROM users 
+               WHERE role = 'admin' 
+               ORDER BY created_at DESC
+               LIMIT $admins_per_page OFFSET $admin_offset";
 $admin_result = mysqli_query($conn, $admin_list);
 
 // query fofr Reject user post 
@@ -205,8 +228,121 @@ if (isset($_POST['approve'])) {
     }
 }
 
+// Handle Logout - Destroy session and redirect to homepage
+if (isset($_POST['logout'])) {
+    session_unset();
+    session_destroy();
+    header("Location: homepage.php");
+    exit;
+}
+
+// for modal register  
+if (isset($_POST['addAdminForm'])) {
+    // Process form submission
+    $admin_name = $_POST['adminName'] ?? '';
+    $admin_email = trim($_POST['adminEmail']) ?? '';
+    $admin_password = $_POST['adminPassword'] ?? '';
+
+    // Check if email already exists
+    $check_email = "SELECT email FROM users WHERE email = '$admin_email'";
+    $res = mysqli_query($conn, $check_email);
+
+    if ($res && mysqli_num_rows($res) > 0) {
+        echo "<script>alert('Email already exists');</script>";
+        exit;
+    }
+
+    // Validate inputs (basic example)
+    if (!filter_var($admin_email, FILTER_VALIDATE_EMAIL)) {
+        echo "<script>alert('Invalid email format');</script>";
+    } elseif (strlen($admin_password) < 6) {
+        echo "<script>alert('Password must be at least 6 characters long');</script>";
+    } else {
+        // Hash the password
+        $hashed_password = password_hash($admin_password, PASSWORD_BCRYPT);
+
+        // Insert new admin into database
+        $stmt = $conn->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, 'admin')");
+        $stmt->bind_param("sss", $admin_name, $admin_email, $hashed_password);
+
+        if ($stmt->execute()) {
+            echo "<script>alert('New admin added successfully');</script>";
+            header("Location: superadmin.php");
+        } else {
+            echo "<script>alert('Error adding admin: " . $stmt->error . "');</script>";
+        }
+
+        $stmt->close();
+    }
+}
+
+// for active or inactive accoutt
+if (isset($_POST['activate'])) {
+    $admin_id = $_POST['admin_id'];
+    $query = "UPDATE users SET status='active' WHERE id='$admin_id'";
+    mysqli_query($conn, $query);
+    header("Location: superadmin.php");
+    exit;
+}
+
+if (isset($_POST['deactivate'])) {
+    $admin_id = $_POST['admin_id'];
+    $query = "UPDATE users SET status='inactive' WHERE id='$admin_id'";
+    mysqli_query($conn, $query);
+    header("Location: superadmin.php");
+    exit;
+}
+
+// Bell notification for unread messages
+$adminID = $_SESSION['user_id'];
+$notifQuery = "SELECT COUNT(*) AS unread_count FROM notifications WHERE user_id = $adminID AND is_read = 0";
+$notifResult = mysqli_query($conn, $notifQuery);
 
 
+// Fetch recent notifications for dropdown
+$notificationsListQuery = "
+    SELECT 
+        n.id, 
+        n.message, 
+        n.is_read, 
+        n.created_at, 
+        u.name AS sender_name, 
+        u.email AS sender_email
+    FROM notifications n
+    JOIN users u ON n.user_id = u.id WHERE u.role = 'superadmin' && n.is_read = 0
+    ORDER BY n.created_at DESC
+    LIMIT 10";
+$notificationsListResult = mysqli_query($conn, $notificationsListQuery);
+
+
+
+// for all users 
+// Pagination setup
+$limit = 3;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$offset = ($page - 1) * $limit;
+
+// Fetch all users with pagination
+$allusers_query = "SELECT * FROM users ORDER BY created_at DESC LIMIT $limit OFFSET $offset";
+$allusers_result = mysqli_query($conn, $allusers_query);
+
+// Total users count
+$countQuery = "SELECT COUNT(*) as total FROM users";
+$countResult = mysqli_query($conn, $countQuery);
+$countRow = mysqli_fetch_assoc($countResult);
+$totalUsers = $countRow['total'];
+$totalPages = ceil($totalUsers / $limit);
+
+// mark as read toggleNotifications
+if(isset($_POST['mark_read'])){
+    $notif_id = intval($_POST['notif_id']);
+    $stmt = $conn->prepare("UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?");
+    $stmt->bind_param("ii", $notif_id, $user_id);
+    $stmt->execute();
+    $stmt->close();
+    header("Location: superadmin.php");
+    exit;
+}
 
 
 
@@ -221,17 +357,8 @@ if (isset($_POST['approve'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Super Admin Dashboard</title>
-    <!--
-	Sections & Hooks:
-	1. Top Navbar (logo, search, notifications, profile) -> attach session/user info.
-	2. Sidebar Navigation -> highlight current route.
-	3. Overview Metrics -> inject stats via PHP variables.
-	4. Pending Users Table -> loop pending users, post to approve/reject routes.
-	5. Manage Admins Table -> loop admins list, bind edit/revoke routes.
-	6. Posts Panel -> loop posts, wire view/edit/delete routes.
-	7. Logs & Backups -> loop activity logs, connect backup endpoints.
-	8. Footer -> static/legal.
-	-->
+
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <style>
@@ -430,6 +557,8 @@ if (isset($_POST['approve'])) {
             transition: transform 0.18s ease, box-shadow 0.18s ease;
         }
 
+
+        
         .table tbody tr:hover {
             transform: translateY(-2px);
             box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
@@ -620,14 +749,12 @@ if (isset($_POST['approve'])) {
                 </ul>
             </nav>
             <div class="sidebar__footer">
-                <form method="post" action="<!-- TODO: wire logout endpoint e.g. /admin/logout.php -->">
-                    <!-- <?php // echo $csrf_token; 
-                            ?> -->
-                    <button type="submit" class="btn btn-outline-danger w-100 btn-pill">
-                        <i class="bi bi-box-arrow-right me-2"></i>
-                        Logout
-                    </button>
-                </form>
+                <div class="text-center p-3">
+                    <p class="small text-muted mb-0">
+                        <i class="bi bi-shield-check-fill text-success me-1"></i>
+                        Logged in as Super Admin
+                    </p>
+                </div>
             </div>
         </aside>
 
@@ -645,40 +772,196 @@ if (isset($_POST['approve'])) {
 
                     </div>
                     <div class="d-flex align-items-center gap-3">
-                        <button type="button" class="btn btn-light rounded-pill position-relative text-secondary" aria-label="Notifications">
-                            <i class="bi bi-bell"></i>
-                            <span class="position-absolute top-0 start-100 translate-middle badge bg-danger rounded-pill">3</span>
-                        </button>
+                        <?php
+                        $notifRow = mysqli_fetch_assoc($notifResult);
+                        $unreadCount = $notifRow['unread_count'] ?? 0;
+                        ?>
 
-                        <div class="d-flex align-items-center gap-2">
-                            <?php
-                            // User name ka first letter (uppercase)
-                            $firstLetter = strtoupper(substr($user_name, 0, 2));
-                            ?>
+                        <!-- Notifications Dropdown -->
+                        <div class="dropdown">
+                            <button type="button"
+                                class="btn btn-light rounded-pill position-relative text-secondary"
+                                id="notificationDropdown"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
+                                aria-label="Notifications">
+                                <i class="bi bi-bell"></i>
+                                <?php if ($unreadCount > 0): ?>
+                                    <span class="position-absolute top-0 start-100 translate-middle badge bg-danger rounded-pill">
+                                        <?php echo htmlspecialchars($unreadCount); ?>
+                                    </span>
+                                <?php endif; ?>
+                            </button>
 
-                            <img
-                                src="data:image/svg+xml,<?php
-                                                        echo rawurlencode("
-                <svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'>
-                    <rect width='40' height='40' rx='20' fill='#4f46e5'/>
-                    <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='16'>{$firstLetter}</text>
-                </svg>
-            ");
-                                                        ?>"
-                                alt="<?php echo htmlspecialchars($user_name); ?> avatar"
-                                class="avatar">
+                            <!-- Notification Dropdown Menu -->
+                            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2"
+                                aria-labelledby="notificationDropdown"
+                                style="min-width: 380px; max-width: 450px; border-radius: 1rem; max-height: 500px; overflow-y: auto;">
 
-                            <div class="d-none d-sm-block">
-                                <p class="mb-0 fw-semibold small">
-                                    <?php echo htmlspecialchars($user_name); ?>
-                                </p>
-                                <span class="text-muted small">
-                                    <?php echo htmlspecialchars($row['email']); ?>
-                                </span>
-                            </div>
+                                <!-- Header -->
+                                <li class="px-3 py-2 border-bottom">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0 fw-bold">
+                                            <i class="bi bi-bell-fill text-primary me-2"></i>Notifications
+                                        </h6>
+                                        <?php if ($unreadCount > 0): ?>
+                                            <span class="badge bg-danger rounded-pill"><?php echo $unreadCount; ?> New</span>
+                                        <?php endif; ?>
+                                    </div>
+                                </li>
+
+                                <!-- Notification List -->
+                                <?php if (mysqli_num_rows($notificationsListResult) > 0): ?>
+                                    <?php while ($notification = mysqli_fetch_assoc($notificationsListResult)): ?>
+                                        <li>
+                                            <div class="dropdown-item py-3 px-3 <?php echo $notification['is_read'] == 0 ? 'bg-light' : ''; ?>"
+                                                style="border-left: 3px solid <?php echo $notification['is_read'] == 0 ? '#0d6efd' : 'transparent'; ?>;">
+                                                <div class="d-flex gap-3">
+                                                    <!-- Sender Avatar -->
+                                                    <?php
+                                                    $senderName = $notification['sender_name'] ?? 'Unknown';
+                                                    $senderInitials = strtoupper(substr($senderName, 0, 2));
+                                                    $avatarColor = $notification['is_read'] == 0 ? '#0d6efd' : '#6c757d';
+                                                    ?>
+                                                    <div class="flex-shrink-0">
+                                                        <img
+                                                            src="data:image/svg+xml,<?php echo rawurlencode("
+                                                                <svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'>
+                                                                    <rect width='40' height='40' rx='20' fill='{$avatarColor}'/>
+                                                                    <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='16'>{$senderInitials}</text>
+                                                                </svg>
+                                                            "); ?>"
+                                                            alt="Avatar" width="40" height="40">
+                                                    </div>
+
+                                                    <!-- Notification Content -->
+                                                    <div class="flex-grow-1">
+                                                        <div class="fw-semibold small mb-1">
+                                                            <?php echo htmlspecialchars($senderName); ?>
+                                                            <?php if ($notification['is_read'] == 0): ?>
+                                                                <span class="badge bg-primary badge-sm ms-1">New</span>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                        <p class="mb-1 text-muted small">
+                                                            <?php echo htmlspecialchars($notification['message']); ?>
+                                                        </p>
+                                                        <div class="d-flex align-items-center justify-content-between gap-2">
+                                                            <small class="text-muted">
+                                                                <i class="bi bi-clock me-1"></i>
+                                                                <?php echo date('d M Y, h:i A', strtotime($notification['created_at'])); ?>
+                                                            </small>
+                                                            
+                                                            <!-- Mark as Read Button -->
+                                                            <?php if ($notification['is_read'] == 0): ?>
+                                                                <form method="POST" action="" class="d-inline">
+                                                                    <input type="hidden" name="notif_id" value="<?php echo $notification['id']; ?>">
+                                                                    <button type="submit" 
+                                                                            name="mark_read" 
+                                                                            class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0"
+                                                                            style="font-size: 0.7rem;">
+                                                                        <i class="bi bi-check2 me-1"></i>Mark as Read
+                                                                    </button>
+                                                                </form>
+                                                            <?php endif; ?>
+                                                               
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </li>
+
+                                    <?php endwhile; ?>
+
+                                    <!-- View All Button -->
+                                    <!-- <li class="border-top mt-2">
+                                        <a class="dropdown-item text-center py-2 fw-semibold text-primary" href="#">
+                                            <i class="bi bi-arrow-right-circle me-1"></i>View All Notifications
+                                        </a>
+                                    </li> -->
+                                <?php else: ?>
+                                    <!-- No Notifications -->
+                                    <li class="text-center py-5">
+                                        <i class="bi bi-bell-slash text-muted" style="font-size: 3rem;"></i>
+                                        <p class="text-muted mt-2 mb-0">No notifications yet</p>
+                                    </li>
+                                <?php endif; ?>
+                            </ul>
                         </div>
 
+                        <!-- User Profile Dropdown with Logout -->
+                        <div class="dropdown">
+                            <button class="btn btn-light rounded-pill d-flex align-items-center gap-2 dropdown-toggle"
+                                type="button"
+                                id="userDropdown"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                                <?php
+                                // User name ka first letter (uppercase)
+                                $firstLetter = strtoupper(substr($user_name, 0, 2));
+                                ?>
+                                <img
+                                    src="data:image/svg+xml,<?php
+                                                            echo rawurlencode("
+                    <svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'>
+                        <rect width='32' height='32' rx='16' fill='#4f46e5'/>
+                        <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='14'>{$firstLetter}</text>
+                    </svg>
+                ");
+                                                            ?>"
+                                    alt="<?php echo htmlspecialchars($user_name); ?> avatar"
+                                    width="32" height="32">
+                                <div class="d-none d-sm-block text-start">
+                                    <div class="fw-semibold small">
+                                        <?php echo htmlspecialchars($user_name); ?>
+                                    </div>
+                                    <div class="text-muted small">
+                                        Super Admin
+                                    </div>
+                                </div>
+                            </button>
 
+                            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2"
+                                aria-labelledby="userDropdown"
+                                style="min-width: 250px; border-radius: 1rem;">
+                                <li class="px-3 py-2 border-bottom">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <img
+                                            src="data:image/svg+xml,<?php
+                                                                    echo rawurlencode("
+                                <svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'>
+                                    <rect width='40' height='40' rx='20' fill='#4f46e5'/>
+                                    <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='16'>{$firstLetter}</text>
+                                </svg>
+                            ");
+                                                                    ?>"
+                                            alt="Avatar" width="40" height="40">
+                                        <div class="flex-grow-1">
+                                            <div class="fw-bold"><?php echo htmlspecialchars($user_name); ?></div>
+                                            <div class="small text-muted"><?php echo htmlspecialchars($row['email']); ?></div>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li><a class="dropdown-item py-2" href="#overview">
+                                        <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                                    </a></li>
+                                <li><a class="dropdown-item py-2" href="#settings">
+                                        <i class="bi bi-gear me-2"></i>Settings
+                                    </a></li>
+                                <li><a class="dropdown-item py-2" href="homepage.php">
+                                        <i class="bi bi-house me-2"></i>Go to Homepage
+                                    </a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <form method="POST" action="" class="px-2">
+                                        <button type="submit" name="logout" class="btn btn-danger w-100 btn-pill">
+                                            <i class="bi bi-box-arrow-right me-2"></i>Logout
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -793,20 +1076,7 @@ if (isset($_POST['approve'])) {
                                     <p class="mb-0 text-muted small">Review and manage newly registered accounts.</p>
                                 </div>
                             </div>
-                            <!-- Filter -->
-                            <form method="POST" class="d-flex justify-content-center mb-4" style="gap:8px;">
-                                <input type="text"
-                                    name="filter_input"
-                                    class="form-control w-auto"
-                                    style="max-width: 300px;"
-                                    placeholder="Search users..."
-                                    value="<?php echo isset($_POST['filter_input']) ? htmlspecialchars($_POST['filter_input']) : ''; ?>">
-                                <button type="submit"
-                                    name="filter_button"
-                                    class="btn btn-primary">
-                                    <i class="bi bi-search"></i> Search
-                                </button>
-                            </form>
+                          
 
                         </div>
                         <div class="panel__body p-0">
@@ -826,7 +1096,7 @@ if (isset($_POST['approve'])) {
                                         <!-- PHP: loop pending users as $user -->
 
                                         <?php if (mysqli_num_rows($pendingUsersResult) > 0) : ?>
-                                            <?php while ($userspending = mysqli_fetch_assoc($pendingUsersResult)) : ?>
+                                            <?php while ($userspending = mysqli_fetch_assoc($pendingUsersResult) ) : ?>
                                                 <tr>
                                                     <td>
                                                         <div class="d-flex align-items-center gap-2">
@@ -944,10 +1214,63 @@ if (isset($_POST['approve'])) {
                                     <p class="mb-0 text-muted small">Control internal access and permissions.</p>
                                 </div>
                             </div>
-                            <a href="<!-- /admin/add_admin.php -->" class="btn btn-primary btn-pill btn-sm">
+                            <!-- Button trigger modal -->
+                            <a href="#" class="btn btn-primary btn-pill btn-sm" data-bs-toggle="modal" data-bs-target="#addAdminModal">
                                 <i class="bi bi-plus-lg me-2"></i>Add Admin
                             </a>
+
+                            <!-- Modal -->
+                            <div class="modal fade" id="addAdminModal" tabindex="-1" aria-labelledby="addAdminModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+
+                                        <!-- Modal Header -->
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="addAdminModalLabel">Add New Admin</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+
+                                        <!-- Modal Body -->
+                                        <!-- getting all modal body form fields properly aligned -->
+                                        <?php
+
+
+
+                                        ?>
+
+                                        <div class="modal-body">
+                                            <form method="POST" id="addAdminForm" autocomplete="off">
+                                                <div class="mb-3">
+                                                    <label for="adminName" class="form-label">Name</label>
+                                                    <input type="text" class="form-control" id="adminName" name="adminName" placeholder="Enter name" required autocomplete="off">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="adminEmail" class="form-label">Email</label>
+                                                    <input type="email" class="form-control" id="adminEmail" name="adminEmail" placeholder="Enter email" required autocomplete="new-password">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="adminPassword" class="form-label">Password</label>
+                                                    <input type="password" class="form-control" id="adminPassword" name="adminPassword" placeholder="Enter password" required>
+                                                </div>
+                                                <!-- Modal Footer -->
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    <button type="submit" name="addAdminForm" class="btn btn-primary">Create Admin</button>
+                                                </div>
+                                            </form>
+                                        </div>
+
+
+
+                                    </div>
+                                </div>
+                            </div>
+
+
+
                         </div>
+
+                        <!-- for admins  -->
                         <div class="panel__body p-0">
                             <div class="table-responsive">
                                 <table class="table align-middle mb-0">
@@ -957,6 +1280,8 @@ if (isset($_POST['approve'])) {
                                             <th scope="col">Email</th>
                                             <th scope="col">Role</th>
                                             <th scope="col">Last Login</th>
+                                            <th scope="col">Status</th>
+
                                             <th scope="col" class="text-end">Actions</th>
                                         </tr>
                                     </thead>
@@ -1014,23 +1339,24 @@ if (isset($_POST['approve'])) {
                                                         </span>
                                                     </td>
                                                     <td><?php echo date('d M Y', strtotime($admin['created_at'])); ?></td>
+                                                    <td><?php echo ucfirst(htmlspecialchars($admin['status'])); ?></td>
 
 
-                                                    <td class="text-end">
-                                                        <div class="d-flex justify-content-end gap-2">
-                                                            <form method="post" action="">
-                                                                <input type="hidden" name="admin_id" value="<?php echo $admin['id']; ?>">
-                                                                <button type="submit" class="btn btn-outline-primary btn-action">
-                                                                    <i class="bi bi-pencil me-1"></i>Edit
-                                                                </button>
+
+
+                                                    <td>
+                                                        <?php if ($admin['status'] == 'active') { ?>
+                                                            <form method="POST" action="">
+                                                                <input type="hidden" name="admin_id" value="<?= $admin['id']; ?>">
+                                                                <button type="submit" name="deactivate" class="btn btn-warning btn-sm">Deactivate</button>
+
                                                             </form>
-                                                            <form method="post" action="">
-                                                                <input type="hidden" name="admin_id" value="<?php echo $admin['id']; ?>">
-                                                                <button type="submit" class="btn btn-outline-danger btn-action">
-                                                                    <i class="bi bi-person-x me-1"></i>Revoke
-                                                                </button>
+                                                        <?php } else { ?>
+                                                            <form method="POST" action="">
+                                                                <input type="hidden" name="admin_id" value="<?= $admin['id']; ?>">
+                                                                <button type="submit" name="activate" class="btn btn-success btn-sm">Activate</button>
                                                             </form>
-                                                        </div>
+                                                        <?php } ?>
                                                     </td>
                                                 </tr>
                                             <?php endwhile; ?>
@@ -1044,9 +1370,245 @@ if (isset($_POST['approve'])) {
                                 </table>
                             </div>
                         </div>
+
+                        <!-- Admin Pagination Section -->
+                        <div class="panel__body border-top">
+                            <nav aria-label="Admins pagination">
+                                <ul class="pagination pagination-sm justify-content-center mb-0 gap-1">
+                                    <!-- Previous Button -->
+                                    <?php if ($current_admin_page > 1): ?>
+                                        <li class="page-item">
+                                            <a class="page-link rounded-pill"
+                                                href="?admin_page=<?php echo $current_admin_page - 1; ?>#admins">
+                                                Previous
+                                            </a>
+                                        </li>
+                                    <?php else: ?>
+                                        <li class="page-item disabled">
+                                            <span class="page-link rounded-pill">Previous</span>
+                                        </li>
+                                    <?php endif; ?>
+
+                                    <!-- Page Numbers -->
+                                    <?php for ($i = 1; $i <= $total_admin_pages; $i++): ?>
+                                        <li class="page-item <?php echo ($i == $current_admin_page) ? 'active' : ''; ?>">
+                                            <a class="page-link rounded-pill"
+                                                href="?admin_page=<?php echo $i; ?>#admins">
+                                                <?php echo $i; ?>
+                                            </a>
+                                        </li>
+                                    <?php endfor; ?>
+
+                                    <!-- Next Button -->
+                                    <?php if ($current_admin_page < $total_admin_pages): ?>
+                                        <li class="page-item">
+                                            <a class="page-link rounded-pill"
+                                                href="?admin_page=<?php echo $current_admin_page + 1; ?>#admins">
+                                                Next
+                                            </a>
+                                        </li>
+                                    <?php else: ?>
+                                        <li class="page-item disabled">
+                                            <span class="page-link rounded-pill">Next</span>
+                                        </li>
+                                    <?php endif; ?>
+                                </ul>
+                            </nav>
+
+                            <!-- Show current range of admins -->
+                            <p class="text-muted small mb-0 mt-2 text-center">
+                                Showing <?php echo min($admin_offset + 1, $total_admins); ?>
+                                to <?php echo min($admin_offset + $admins_per_page, $total_admins); ?>
+                                of <?php echo $total_admins; ?> administrators
+                            </p>
+                        </div>
                     </div>
                 </section>
 
+                <!-- All Registered Users Section -->
+                <section id="all-users" class="container-fluid pb-4">
+                    <div class="panel">
+                        <!-- Header -->
+                        <div class="panel__header">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="btn btn-sm btn-light rounded-circle text-primary">
+                                    <i class="bi bi-people-fill"></i>
+                                </span>
+                                <div>
+                                    <h3 class="h5 fw-semibold mb-0">All Registered Users</h3>
+                                    <p class="mb-0 text-muted small">View and manage all registered users in the system.</p>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-primary-subtle text-primary px-3 py-2">
+                                    <i class="bi bi-person-check-fill me-1"></i>
+                                    <?php echo $totalUsers; ?> Total Users
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Users Table -->
+                        <div class="panel__body p-0">
+                            <?php if (mysqli_num_rows($allusers_result) > 0): ?>
+                                <div class="table-responsive">
+                                    <table class="table align-middle mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">User</th>
+                                                <th scope="col">Email</th>
+                                                <th scope="col">Role</th>
+                                                <th scope="col">Registered</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php while ($user = mysqli_fetch_assoc($allusers_result)): ?>
+                                                <?php
+                                                // Generate initials
+                                                $userName = $user['name'] ?? '';
+                                                $words = explode(' ', trim($userName));
+                                                if (count($words) >= 2) {
+                                                    $userInitials = strtoupper(substr($words[0], 0, 1) . substr($words[1], 0, 1));
+                                                } else {
+                                                    $userInitials = strtoupper(substr($userName, 0, 2));
+                                                }
+
+                                                // Avatar color based on role
+                                                if ($user['role'] === 'superadmin') {
+                                                    $avatarColor = '#9333ea';
+                                                } elseif ($user['role'] === 'admin') {
+                                                    $avatarColor = '#dc2626';
+                                                } else {
+                                                    $avatarColor = '#2563eb';
+                                                }
+                                                ?>
+                                                <tr>
+                                                    <td>
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <!-- Avatar with initials -->
+                                                            <img
+                                                                src="data:image/svg+xml,<?php echo rawurlencode("
+                                                                    <svg xmlns='http://www.w3.org/2000/svg' width='36' height='36'>
+                                                                        <rect width='36' height='36' rx='18' fill='{$avatarColor}'/>
+                                                                        <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='14'>{$userInitials}</text>
+                                                                    </svg>
+                                                                "); ?>"
+                                                                alt="<?php echo htmlspecialchars($userName); ?> avatar"
+                                                                class="rounded-circle">
+
+                                                            <!-- User Info -->
+                                                            <div>
+                                                                <strong><?php echo htmlspecialchars($user['name']); ?></strong>
+                                                                <div class="text-muted small">
+                                                                    ID: <?php echo $user['id']; ?>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+
+                                                    <td>
+                                                        <i class="bi bi-envelope text-muted me-1"></i>
+                                                        <?php echo htmlspecialchars($user['email']); ?>
+                                                    </td>
+
+                                                    <td>
+                                                        <?php if ($user['role'] === 'superadmin'): ?>
+                                                            <span class="badge bg-purple-subtle text-purple fw-semibold" style="background: rgba(168, 85, 247, 0.1); color: #9333ea;">
+                                                                <i class="bi bi-shield-fill-check me-1"></i>Super Admin
+                                                            </span>
+                                                        <?php elseif ($user['role'] === 'admin'): ?>
+                                                            <span class="badge bg-danger-subtle text-danger fw-semibold">
+                                                                <i class="bi bi-shield-fill me-1"></i>Admin
+                                                            </span>
+                                                        <?php else: ?>
+                                                            <span class="badge bg-primary-subtle text-primary fw-semibold">
+                                                                <i class="bi bi-person-fill me-1"></i>User
+                                                            </span>
+                                                        <?php endif; ?>
+                                                    </td>
+
+                                                    <td>
+                                                        <i class="bi bi-calendar3 text-muted me-1"></i>
+                                                        <span class="small text-muted">
+                                                            <?php echo date('M d, Y', strtotime($user['created_at'])); ?>
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            <?php endwhile; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Pagination -->
+                                <?php if ($totalPages > 1): ?>
+                                    <div class="panel__body border-top">
+                                        <nav aria-label="Users pagination">
+                                            <ul class="pagination pagination-sm justify-content-center mb-0 gap-1">
+                                                <!-- Previous Button -->
+                                                <?php if ($page > 1): ?>
+                                                    <li class="page-item">
+                                                        <a class="page-link rounded-pill" 
+                                                           href="?page=<?php echo $page - 1; ?>#all-users">
+                                                            Previous
+                                                        </a>
+                                                    </li>
+                                                <?php else: ?>
+                                                    <li class="page-item disabled">
+                                                        <span class="page-link rounded-pill">Previous</span>
+                                                    </li>
+                                                <?php endif; ?>
+
+                                                <!-- Page Numbers -->
+                                                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                                                    <li class="page-item <?php echo ($i == $page) ? 'active' : ''; ?>">
+                                                        <a class="page-link rounded-pill" 
+                                                           href="?page=<?php echo $i; ?>#all-users">
+                                                            <?php echo $i; ?>
+                                                        </a>
+                                                    </li>
+                                                <?php endfor; ?>
+
+                                                <!-- Next Button -->
+                                                <?php if ($page < $totalPages): ?>
+                                                    <li class="page-item">
+                                                        <a class="page-link rounded-pill" 
+                                                           href="?page=<?php echo $page + 1; ?>#all-users">
+                                                            Next
+                                                        </a>
+                                                    </li>
+                                                <?php else: ?>
+                                                    <li class="page-item disabled">
+                                                        <span class="page-link rounded-pill">Next</span>
+                                                    </li>
+                                                <?php endif; ?>
+                                            </ul>
+                                        </nav>
+
+                                        <!-- Pagination Info -->
+                                        <p class="text-muted small mb-0 mt-2 text-center">
+                                            Showing <?php echo min($offset + 1, $totalUsers); ?> 
+                                            to <?php echo min($offset + $limit, $totalUsers); ?> 
+                                            of <?php echo $totalUsers; ?> users
+                                        </p>
+                                    </div>
+                                <?php endif; ?>
+
+                            <?php else: ?>
+                                <!-- Empty State -->
+                                <div class="text-center py-5">
+                                    <div class="mb-4">
+                                        <i class="bi bi-people text-muted" style="font-size: 4rem;"></i>
+                                    </div>
+                                    <h3 class="h5 fw-bold mb-2">No Users Found</h3>
+                                    <p class="text-muted mb-0">
+                                        There are no registered users in the system yet.
+                                    </p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- for posts  -->
                 <section id="posts" class="container-fluid pb-4">
                     <div class="panel">
                         <div class="panel__header">
@@ -1289,7 +1851,7 @@ if (isset($_POST['approve'])) {
                                     if ($start_page > 1): ?>
                                         <li class="page-item">
                                             <a class="page-link rounded-pill" href="?page=1#posts">1</a>
-                                        </li>
+                                                                               </li>
                                         <?php if ($start_page > 2): ?>
                                             <li class="page-item disabled">
                                                 <span class="page-link rounded-pill">...</span>
