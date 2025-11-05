@@ -3,6 +3,7 @@ session_start();
 include 'db_connect.php';
 
 $postId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+// echo "<script>alert('$postId');</script>";
 if (!$postId) {
        header('Location: homepage.php');
        exit;
@@ -34,7 +35,6 @@ $commentSql = "
     SELECT c.id, c.comment_text, c.created_at, u.name, u.email
     FROM comments c
     JOIN users u ON c.user_id = u.id
-    WHERE c.task_id = '$postId'
     ORDER BY c.created_at DESC
 ";
 $comments = mysqli_query($conn, $commentSql);
@@ -603,7 +603,7 @@ $totalComments = $CommentRow['total_comments'];
                                                  <input type="hidden" name="task_id" value="<?php echo $task['id']; ?>">
                                                  <div class="input-group">
                                                         <input type="text" name="comment_text" class="form-control" placeholder="Write a comment..." required>
-                                                        
+
                                                         <button class="btn" type="submit" name="add_comment"><i class="fas fa-paper-plane"></i></button>
                                                  </div>
                                           </form>

@@ -2,7 +2,7 @@
 session_start();
 include 'db_connect.php';
 include 'middleware.php';
-checkRole(['admin']);
+checkRole([2]);
 
 // Redirect if not logged in
 if (!isset($_SESSION['user_id'])) {

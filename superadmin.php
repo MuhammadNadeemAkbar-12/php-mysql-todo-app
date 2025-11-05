@@ -1,11 +1,40 @@
 <?php
 
 include 'db_connect.php';
-session_start();
+// session_start();
 include 'middleware.php';
-checkRole(['superadmin']);
+include 'functions.php';
+checkRole([1]);
 
-$user_id = $_SESSION['user_id'];
+// Check specific permission
+// if (hasPermission('add_task')) {
+//     echo "Can add task";
+// }
+
+// if (hasPermission('edit_task')) {
+//     echo "Can edit task";
+// }
+
+// if (hasPermission('delete_task')) {
+//     echo "Can delete task";
+// }
+
+// Get all permissions
+// $all_permissions = hasPermission();
+// echo "<pre>";
+// print_r($all_permissions);
+// echo "</pre>";
+// Output: Array ( [0] => add_task [1] => edit_task [2] => delete_task )
+
+// Or use getUserPermissions()
+// $permissions = hasPermission();
+// foreach ($permissions as $perm) {
+//     echo $perm . "<br>";
+// }
+
+
+
+
 
 // Redirect if not logged in
 if (!isset($_SESSION['user_id'])) {
@@ -14,18 +43,15 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 
-
-
-
 // admin name email details 
-$user_name_query = "SELECT email, name role FROM users WHERE role = 'superadmin' LIMIT 1";
+$user_name_query = "SELECT email, name role_id FROM users WHERE role_id = 1 LIMIT 1";
 $userResult = mysqli_query($conn, $user_name_query);
 
 $user_name = $_SESSION['user_name'];
 if ($userResult && mysqli_num_rows($userResult) > 0) {
     $row = mysqli_fetch_assoc($userResult);
-    if (!empty($row['role'])) {
-        $user_name = ucfirst($row['role']);
+    if (!empty($row['role_id'])) {
+        $user_name = ucfirst($row['role_id']);
     }
 }
 
@@ -35,7 +61,7 @@ $current_page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $offset = ($current_page - 1) * $posts_per_page;
 
 // Count total posts
-if ($_SESSION['user_role'] === 'superadmin') {
+if ($_SESSION['role_id'] == 1) {
     $countQuery = "SELECT COUNT(*) AS total FROM tasks WHERE status IN ('approved', 'pending')";
 } else {
     $countQuery = "SELECT COUNT(*) AS total FROM tasks WHERE status = 'approved'";
@@ -44,7 +70,7 @@ $countResult = mysqli_query($conn, $countQuery);
 $totalPosts = mysqli_fetch_assoc($countResult)['total'];
 $total_pages = ceil($totalPosts / $posts_per_page);
 
-if ($_SESSION['user_role'] === 'superadmin') {
+if ($_SESSION['role_id'] == 1) {
     $postsQuery = "
         SELECT 
             t.id AS task_id,
@@ -52,12 +78,13 @@ if ($_SESSION['user_role'] === 'superadmin') {
             t.description,
             t.image,
             t.status,
+            t.is_deleted,
             u.created_at,
             u.id AS user_id,
             u.name AS author_name
         FROM tasks t
         JOIN users u ON t.user_id = u.id 
-        WHERE t.status IN ('approved', 'pending')
+        WHERE t.status IN ('approved', 'pending') && t.is_deleted = 0
         ORDER BY t.created_at DESC
         LIMIT $posts_per_page OFFSET $offset
     ";
@@ -70,11 +97,12 @@ if ($_SESSION['user_role'] === 'superadmin') {
             t,.image,
             t.status,
             t.created_at,
+            t.is_deleted,
             u.id AS user_id,
             u.name AS author_name
         FROM tasks t
         JOIN users u ON t.user_id = u.id 
-        WHERE t.status = 'approved'
+        WHERE t.status = 'approved' && t.is_deleted = 0
         ORDER BY t.created_at DESC
         LIMIT $posts_per_page OFFSET $offset
     ";
@@ -86,7 +114,7 @@ $result = mysqli_query($conn, $postsQuery);
 
 
 // all Users 
-$fetchAllUsers = "SELECT COUNT(*) AS total_users from users where role = 'user'";
+$fetchAllUsers = "SELECT COUNT(*) AS total_users from users where role_id = 3";
 $countedResult = mysqli_query($conn, $fetchAllUsers);
 if ($countedResult) {
     $alluserrow =  mysqli_fetch_assoc($countedResult);
@@ -116,26 +144,25 @@ $approveQueryResulty = mysqli_query($conn, $fetchAllApproveQuery);
 if ($approveQueryResulty) {
     $Approverow = mysqli_fetch_assoc($approveQueryResulty);
 }
-// echo $Approverow['approve_task'];
+// echo "<script>alert('{$Approverow['approve_task']}');</script>";
+echo $Approverow['approve_task'];
 
 
 // admin name email details 
-$user_name_query = "SELECT email, name role FROM users WHERE role = 'superadmin' LIMIT 1";
+$user_name_query = "SELECT email, name role_id FROM users WHERE role_id = 1 LIMIT 1";
 $userResult = mysqli_query($conn, $user_name_query);
-
 $user_name = $_SESSION['user_name'];
 if ($userResult && mysqli_num_rows($userResult) > 0) {
     $row = mysqli_fetch_assoc($userResult);
-    if (!empty($row['role'])) {
-        $user_name = ucfirst($row['role']);
+    if (!empty($row['role_id'])) {
+        $user_name = ucfirst($row['role_id']);
     }
 }
 
 // Handle Task Delete (Super Admin)
 if (isset($_GET['delete_id'])) {
     $delete_id = intval($_GET['delete_id']);
-
-    $stmt = $conn->prepare("DELETE FROM tasks WHERE id = ?");
+    $stmt = $conn->prepare("UPDATE tasks SET is_deleted = 1 WHERE id = ?");
     $stmt->bind_param("i", $delete_id);
 
     if ($stmt->execute()) {
@@ -155,10 +182,12 @@ $user_offset = ($current_user_page - 1) * $users_per_page;
 // Count total pending users
 $countPendingUsersQuery = "SELECT COUNT(*) AS total FROM tasks t 
     JOIN users u ON t.user_id = u.id 
-    WHERE t.status = 'pending' AND u.role = 'user'";
+    WHERE t.status = 'pending'";
 $countPendingResult = mysqli_query($conn, $countPendingUsersQuery);
 $totalPendingUsers = mysqli_fetch_assoc($countPendingResult)['total'];
 $total_user_pages = ceil($totalPendingUsers / $users_per_page);
+// echo "<script>alert('$total_user_pages');</script>";
+
 
 // for approving pending users with pagination
 $pendingUsersQuery = "SELECT 
@@ -169,10 +198,13 @@ $pendingUsersQuery = "SELECT
     t.created_at, 
     u.name AS user_name,
     u.email,
-    u.role
+    u.role_id,
+    r.role_name AS role_name,
+    r.id
 FROM tasks t
 JOIN users u ON t.user_id = u.id
-WHERE t.status = 'pending' AND u.role = 'user'
+JOIN roles r ON u.role_id = r.id
+WHERE t.status = 'pending' 
 ORDER BY t.created_at DESC
 LIMIT $users_per_page OFFSET $user_offset";
 $pendingUsersResult = mysqli_query($conn, $pendingUsersQuery);
@@ -190,7 +222,7 @@ $current_admin_page = isset($_GET['admin_page']) ? max(1, intval($_GET['admin_pa
 $admin_offset = ($current_admin_page - 1) * $admins_per_page;
 
 // Step 4: Count total admins (to calculate total pages)
-$count_admins_query = "SELECT COUNT(*) AS total FROM users WHERE role = 'admin'";
+$count_admins_query = "SELECT COUNT(*) AS total FROM users WHERE role_id = 2";
 $count_admins_result = mysqli_query($conn, $count_admins_query);
 $total_admins = mysqli_fetch_assoc($count_admins_result)['total'];
 
@@ -199,9 +231,9 @@ $total_admins = mysqli_fetch_assoc($count_admins_result)['total'];
 $total_admin_pages = ceil($total_admins / $admins_per_page);
 
 // Step 6: Fetch only admins for current page using LIMIT and OFFSET
-$admin_list = "SELECT id, name, email, created_at, role, status 
-               FROM users 
-               WHERE role = 'admin' 
+$admin_list = "SELECT u.id, u.name, u.email, u.created_at, u.role_id, u.status, r.role_name AS role_name, r.id AS role_id 
+               FROM roles r JOIN users u ON r.id = u.role_id
+               WHERE role_id = 2 
                ORDER BY created_at DESC
                LIMIT $admins_per_page OFFSET $admin_offset";
 $admin_result = mysqli_query($conn, $admin_list);
@@ -262,7 +294,7 @@ if (isset($_POST['addAdminForm'])) {
         $hashed_password = password_hash($admin_password, PASSWORD_BCRYPT);
 
         // Insert new admin into database
-        $stmt = $conn->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, 'admin')");
+        $stmt = $conn->prepare("INSERT INTO users (name, email, password, role_id) VALUES (?, ?, ?, 2)");
         $stmt->bind_param("sss", $admin_name, $admin_email, $hashed_password);
 
         if ($stmt->execute()) {
@@ -309,7 +341,7 @@ $notificationsListQuery = "
         u.name AS sender_name, 
         u.email AS sender_email
     FROM notifications n
-    JOIN users u ON n.user_id = u.id WHERE u.role = 'superadmin' && n.is_read = 0
+    JOIN users u ON n.user_id = u.id WHERE role_id = 1 && n.is_read = 0
     ORDER BY n.created_at DESC
     LIMIT 10";
 $notificationsListResult = mysqli_query($conn, $notificationsListQuery);
@@ -334,7 +366,7 @@ $totalUsers = $countRow['total'];
 $totalPages = ceil($totalUsers / $limit);
 
 // mark as read toggleNotifications
-if(isset($_POST['mark_read'])){
+if (isset($_POST['mark_read'])) {
     $notif_id = intval($_POST['notif_id']);
     $stmt = $conn->prepare("UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?");
     $stmt->bind_param("ii", $notif_id, $user_id);
@@ -558,7 +590,7 @@ if(isset($_POST['mark_read'])){
         }
 
 
-        
+
         .table tbody tr:hover {
             transform: translateY(-2px);
             box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
@@ -850,20 +882,20 @@ if(isset($_POST['mark_read'])){
                                                                 <i class="bi bi-clock me-1"></i>
                                                                 <?php echo date('d M Y, h:i A', strtotime($notification['created_at'])); ?>
                                                             </small>
-                                                            
+
                                                             <!-- Mark as Read Button -->
                                                             <?php if ($notification['is_read'] == 0): ?>
                                                                 <form method="POST" action="" class="d-inline">
                                                                     <input type="hidden" name="notif_id" value="<?php echo $notification['id']; ?>">
-                                                                    <button type="submit" 
-                                                                            name="mark_read" 
-                                                                            class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0"
-                                                                            style="font-size: 0.7rem;">
+                                                                    <button type="submit"
+                                                                        name="mark_read"
+                                                                        class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0"
+                                                                        style="font-size: 0.7rem;">
                                                                         <i class="bi bi-check2 me-1"></i>Mark as Read
                                                                     </button>
                                                                 </form>
                                                             <?php endif; ?>
-                                                               
+
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1076,7 +1108,7 @@ if(isset($_POST['mark_read'])){
                                     <p class="mb-0 text-muted small">Review and manage newly registered accounts.</p>
                                 </div>
                             </div>
-                          
+
 
                         </div>
                         <div class="panel__body p-0">
@@ -1096,7 +1128,7 @@ if(isset($_POST['mark_read'])){
                                         <!-- PHP: loop pending users as $user -->
 
                                         <?php if (mysqli_num_rows($pendingUsersResult) > 0) : ?>
-                                            <?php while ($userspending = mysqli_fetch_assoc($pendingUsersResult) ) : ?>
+                                            <?php while ($userspending = mysqli_fetch_assoc($pendingUsersResult)) : ?>
                                                 <tr>
                                                     <td>
                                                         <div class="d-flex align-items-center gap-2">
@@ -1130,21 +1162,27 @@ if(isset($_POST['mark_read'])){
                                                     </td>
 
                                                     <td><?php echo $userspending['email'] ?></td>
-                                                    <td><span class="badge bg-light text-primary fw-semibold"><?php echo $userspending['role'] ?></span></td>
+                                                    <td><span class="badge bg-light text-primary fw-semibold"><?php echo $userspending['role_name'] ?></span></td>
                                                     <td><span class="badge-soft" data-status="pending"><i class="bi bi-clock"></i><?php echo htmlspecialchars($userspending['status']) ?></span></td>
                                                     <td><?php echo date('d M Y', strtotime($userspending['created_at'])); ?></td>
                                                     <td>
                                                         <div class="d-flex justify-content-end gap-2">
                                                             <form method="POST" action="">
                                                                 <input type="hidden" name="task_id" value="<?php echo $userspending['task_id']; ?>">
-                                                                <button type="submit" name="approve" class="btn btn-success btn-action">
-                                                                    <i class="bi bi-check-circle me-1"></i>Approve
-                                                                </button>
-                                                                <input type="hidden" name="task_id" value="<?php echo $userspending['task_id']; ?>">
-                                                                <button type="submit" name="reject" class="btn btn-warning btn-action text-dark">
-                                                                    <i class="bi bi-x-circle me-1"></i>Reject
-                                                                </button>
+
+                                                                <?php if (hasPermission('approve-task')): ?>
+                                                                    <button type="submit" name="approve" class="btn btn-success btn-action">
+                                                                        <i class="bi bi-check-circle me-1"></i> Approve
+                                                                    </button>
+                                                                <?php endif; ?>
+
+                                                                <?php if (hasPermission('reject-task')): ?>
+                                                                    <button type="submit" name="reject" class="btn btn-warning btn-action text-dark">
+                                                                        <i class="bi bi-x-circle me-1"></i> Reject
+                                                                    </button>
+                                                                <?php endif; ?>
                                                             </form>
+
 
 
 
@@ -1281,7 +1319,6 @@ if(isset($_POST['mark_read'])){
                                             <th scope="col">Role</th>
                                             <th scope="col">Last Login</th>
                                             <th scope="col">Status</th>
-
                                             <th scope="col" class="text-end">Actions</th>
                                         </tr>
                                     </thead>
@@ -1335,7 +1372,7 @@ if(isset($_POST['mark_read'])){
                                                     <td><?php echo htmlspecialchars($email); ?></td>
                                                     <td>
                                                         <span class="badge bg-danger-subtle text-danger fw-semibold">
-                                                            <?php echo htmlspecialchars($admin['role']); ?>
+                                                            <?php echo htmlspecialchars($admin['role_name']); ?>
                                                         </span>
                                                     </td>
                                                     <td><?php echo date('d M Y', strtotime($admin['created_at'])); ?></td>
@@ -1348,13 +1385,17 @@ if(isset($_POST['mark_read'])){
                                                         <?php if ($admin['status'] == 'active') { ?>
                                                             <form method="POST" action="">
                                                                 <input type="hidden" name="admin_id" value="<?= $admin['id']; ?>">
-                                                                <button type="submit" name="deactivate" class="btn btn-warning btn-sm">Deactivate</button>
+                                                                <?php if (hasPermission('activate_user')): ?>
+                                                                    <button type="submit" name="deactivate" class="btn btn-warning btn-sm">Deactivate</button>
+                                                                <?php endif; ?>
 
                                                             </form>
                                                         <?php } else { ?>
                                                             <form method="POST" action="">
                                                                 <input type="hidden" name="admin_id" value="<?= $admin['id']; ?>">
-                                                                <button type="submit" name="activate" class="btn btn-success btn-sm">Activate</button>
+                                                                <?php if (hasPermission('deactivate_user')): ?>
+                                                                    <button type="submit" name="activate" class="btn btn-success btn-sm">Activate</button>
+                                                                <?php endif; ?>
                                                             </form>
                                                         <?php } ?>
                                                     </td>
@@ -1473,9 +1514,9 @@ if(isset($_POST['mark_read'])){
                                                 }
 
                                                 // Avatar color based on role
-                                                if ($user['role'] === 'superadmin') {
+                                                if ($user['role_id'] == 1) {
                                                     $avatarColor = '#9333ea';
-                                                } elseif ($user['role'] === 'admin') {
+                                                } elseif ($user['role_id'] == 2) {
                                                     $avatarColor = '#dc2626';
                                                 } else {
                                                     $avatarColor = '#2563eb';
@@ -1511,11 +1552,11 @@ if(isset($_POST['mark_read'])){
                                                     </td>
 
                                                     <td>
-                                                        <?php if ($user['role'] === 'superadmin'): ?>
+                                                        <?php if ($user['role_id'] == 1): ?>
                                                             <span class="badge bg-purple-subtle text-purple fw-semibold" style="background: rgba(168, 85, 247, 0.1); color: #9333ea;">
                                                                 <i class="bi bi-shield-fill-check me-1"></i>Super Admin
                                                             </span>
-                                                        <?php elseif ($user['role'] === 'admin'): ?>
+                                                        <?php elseif ($user['role_id'] == 2): ?>
                                                             <span class="badge bg-danger-subtle text-danger fw-semibold">
                                                                 <i class="bi bi-shield-fill me-1"></i>Admin
                                                             </span>
@@ -1546,8 +1587,8 @@ if(isset($_POST['mark_read'])){
                                                 <!-- Previous Button -->
                                                 <?php if ($page > 1): ?>
                                                     <li class="page-item">
-                                                        <a class="page-link rounded-pill" 
-                                                           href="?page=<?php echo $page - 1; ?>#all-users">
+                                                        <a class="page-link rounded-pill"
+                                                            href="?page=<?php echo $page - 1; ?>#all-users">
                                                             Previous
                                                         </a>
                                                     </li>
@@ -1560,8 +1601,8 @@ if(isset($_POST['mark_read'])){
                                                 <!-- Page Numbers -->
                                                 <?php for ($i = 1; $i <= $totalPages; $i++): ?>
                                                     <li class="page-item <?php echo ($i == $page) ? 'active' : ''; ?>">
-                                                        <a class="page-link rounded-pill" 
-                                                           href="?page=<?php echo $i; ?>#all-users">
+                                                        <a class="page-link rounded-pill"
+                                                            href="?page=<?php echo $i; ?>#all-users">
                                                             <?php echo $i; ?>
                                                         </a>
                                                     </li>
@@ -1570,8 +1611,8 @@ if(isset($_POST['mark_read'])){
                                                 <!-- Next Button -->
                                                 <?php if ($page < $totalPages): ?>
                                                     <li class="page-item">
-                                                        <a class="page-link rounded-pill" 
-                                                           href="?page=<?php echo $page + 1; ?>#all-users">
+                                                        <a class="page-link rounded-pill"
+                                                            href="?page=<?php echo $page + 1; ?>#all-users">
                                                             Next
                                                         </a>
                                                     </li>
@@ -1585,8 +1626,8 @@ if(isset($_POST['mark_read'])){
 
                                         <!-- Pagination Info -->
                                         <p class="text-muted small mb-0 mt-2 text-center">
-                                            Showing <?php echo min($offset + 1, $totalUsers); ?> 
-                                            to <?php echo min($offset + $limit, $totalUsers); ?> 
+                                            Showing <?php echo min($offset + 1, $totalUsers); ?>
+                                            to <?php echo min($offset + $limit, $totalUsers); ?>
                                             of <?php echo $totalUsers; ?> users
                                         </p>
                                     </div>
@@ -1697,20 +1738,25 @@ if(isset($_POST['mark_read'])){
                                                     <td>
                                                         <div class="d-flex justify-content-end gap-2">
                                                             <!-- View -->
-                                                            <button type="button"
-                                                                class="btn btn-outline-secondary btn-action"
-                                                                data-bs-toggle="modal"
-                                                                data-bs-target="#viewTaskModal<?php echo $post['task_id']; ?>">
-                                                                <i class="bi bi-eye me-1"></i>View
-                                                            </button>
+                                                            <?php if (hasPermission('view-details')): ?>
+                                                                <button type="button"
+                                                                    class="btn btn-outline-secondary btn-action"
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#viewTaskModal<?php echo $post['task_id']; ?>">
+                                                                    <i class="bi bi-eye me-1"></i>View
+                                                                </button>
+
+                                                            <?php endif; ?>
 
                                                             <!-- Delete -->
+                                                            <?php if (hasPermission('delete_task')): ?>
 
-                                                            <a href="superadmin.php?delete_id=<?php echo $post['task_id']; ?>"
-                                                                class="btn btn-outline-danger btn-action"
-                                                                onclick="return confirm('Are you sure you want to delete this task?')">
-                                                                <i class="bi bi-trash me-1"></i>Delete
-                                                            </a>
+                                                                <a href="superadmin.php?delete_id=<?php echo $post['task_id']; ?>"
+                                                                    class="btn btn-outline-danger btn-action"
+                                                                    onclick="return confirm('Are you sure you want to delete this task?')">
+                                                                    <i class="bi bi-trash me-1"></i>Delete
+                                                                </a>
+                                                            <?php endif; ?>
 
                                                         </div>
                                                     </td>
@@ -1851,7 +1897,7 @@ if(isset($_POST['mark_read'])){
                                     if ($start_page > 1): ?>
                                         <li class="page-item">
                                             <a class="page-link rounded-pill" href="?page=1#posts">1</a>
-                                                                               </li>
+                                        </li>
                                         <?php if ($start_page > 2): ?>
                                             <li class="page-item disabled">
                                                 <span class="page-link rounded-pill">...</span>

@@ -46,14 +46,14 @@ if (isset($_POST['register'])) {
         if (mysqli_num_rows($check_result) > 0) {
             $errorMsg = "<p style='color:red;'>Email already registered!</p>";
         } else {
-            $insert_sql = "INSERT INTO users (name, email, password, role) VALUES ('$fullname', '$email', '$hashedPassword', 'user')";
+            $insert_sql = "INSERT INTO users (name, email, password, role_id) VALUES ('$fullname', '$email', '$hashedPassword', 3)";
 
             $result = mysqli_query($conn, $insert_sql);
 
 
             if ($result) {
                 //  Get Super Admin ID
-                $getAdminid = "SELECT id FROM users WHERE role='superadmin' LIMIT 1";
+                $getAdminid = "SELECT id FROM users WHERE role_id = 1 LIMIT 1";
                 $adminResult = mysqli_query($conn, $getAdminid);
                 $admin = mysqli_fetch_assoc($adminResult);
                 $admin_id = $admin['id'];
