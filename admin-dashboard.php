@@ -1,8 +1,9 @@
-approve<?php
-session_start();
+<?php
+// session_start();
 include 'db_connect.php';
 include 'middleware.php';
-checkRole(['admin']);
+include 'functions.php';
+checkRole([2]);
 
 $user_id = $_SESSION['user_id'];
 
@@ -48,7 +49,7 @@ if (isset($_POST['approve']) || isset($_POST['reject'])) {
 
 
 // name of logged admin 
-$user_name_query = "SELECT role FROM users WHERE role = 'admin' LIMIT 1";
+$user_name_query = "SELECT role_id FROM users WHERE role_id = 2 LIMIT 1";
 $userResult = mysqli_query($conn, $user_name_query);
 
 $user_name = $_SESSION['user_name'] ?? 'Admin';
@@ -56,6 +57,8 @@ if ($userResult && mysqli_num_rows($userResult) > 0) {
     $row = mysqli_fetch_assoc($userResult);
     if (!empty($row['role'])) {
         $user_name = ucfirst($row['role']);
+        
+
     }
 }
 
@@ -114,7 +117,7 @@ $totalTasks = $countRow['total'];
 $totalPages = ceil($totalTasks / $limit);
 
 // all Users 
-$fetchAllUsers = "SELECT COUNT(*) AS total_users from users where role = 'user'";
+$fetchAllUsers = "SELECT COUNT(*) AS total_users from users where role_id = 3";
 $countedResult = mysqli_query($conn, $fetchAllUsers);
 if ($countedResult) {
     $row =  mysqli_fetch_assoc($countedResult);
@@ -612,9 +615,11 @@ if ($blocledqueryResulty) {
         <div class="table-section">
             <div class="table-header">
                 <h4><i class="fas fa-list me-2"></i>All Tasks Overview</h4>
+                <?php if (hasPermission('add_task')): ?>
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTaskModal">
                     <i class="fas fa-plus me-2"></i>Create Task
                 </button>
+                <?php endif; ?>
             </div>
             <?php if (mysqli_num_rows($result) > 0) : ?>
 
@@ -664,21 +669,27 @@ if ($blocledqueryResulty) {
                                                 ....
                                             </button>
                                             <div class="admin-action-menu">
+                                                <?php if (hasPermission('view-details')): ?>
                                                 <button type="button" class="text-info" data-bs-toggle="modal" data-bs-target="#viewTaskModal" data-name="<?php echo htmlspecialchars($task['task_name'], ENT_QUOTES, 'UTF-8'); ?>" data-desc="<?php echo htmlspecialchars($task['description'], ENT_QUOTES, 'UTF-8'); ?>" data-created="<?php echo date('M d, Y', strtotime($task['created_at'])); ?>" data-status="<?php echo htmlspecialchars($task['status']); ?>" data-image="<?php echo htmlspecialchars($task['image'] ?? ''); ?>">
                                                     <i class="fas fa-eye"></i> View Details
                                                 </button>
+                                                <?php endif; ?>
+                                                <?php if (hasPermission('approve-task')): ?>
                                                 <form method="POST" style="margin:0;">
                                                     <input type="hidden" name="task_id" value="<?= $task['id']; ?>">
                                                     <button type="submit" name="approve" class="text-success">
                                                         <i class="fas fa-check-circle"></i> Approve
                                                     </button>
                                                 </form>
+                                                <?php endif; ?>
+                                                <?php if (hasPermission('reject-task')): ?>
                                                 <form method="POST" style="margin:0;">
                                                     <input type="hidden" name="task_id" value="<?= $task['id']; ?>">
                                                     <button type="submit" name="reject" class="text-danger">
                                                         <i class="fas fa-times-circle"></i> Reject
                                                     </button>
                                                 </form>
+                                                <?php endif; ?>
                                             </div>
                                         </div>
                                     </td>

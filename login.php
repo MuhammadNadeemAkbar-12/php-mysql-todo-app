@@ -5,6 +5,13 @@ include 'db_connect.php';
 
 $errorMsg = '';;
 
+// 
+
+
+
+
+
+
 
 if (isset($_POST['login'])) {
     $email = trim($_POST['email']);
@@ -28,9 +35,13 @@ if (isset($_POST['login'])) {
         }
         $errorMsg .= "</ul>";
     } else {
-        $sql = "SELECT * FROM users WHERE email = '$email'";
-        $result = mysqli_query($conn, $sql);
-        $row = mysqli_fetch_assoc($result);
+        $sql = "SELECT id, name, email, password, role_id, status FROM users WHERE email = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+  
 
         if ($row) {
             // echo "<script>alert('{$row['status']}');</script>"; 
@@ -43,16 +54,17 @@ if (isset($_POST['login'])) {
                     exit;
                 }
 
-                // Store session values
                 $_SESSION['user_id'] = $row['id'];
                 $_SESSION['user_name'] = $row['name'];
-                $_SESSION['user_role'] = $row['role'];
+                $_SESSION['role_id'] = $row['role_id'];
+
+
 
                 // Redirect by role
-                if ($row['role'] == 'superadmin') {
+                if ($row['role_id'] == 1 && $row['status'] == 'active') {
                     header("Location: superadmin.php");
                     exit;
-                } elseif ($row['role'] == 'admin') {
+                } elseif ($row['role_id'] == 2) {
                     header("Location: admin-dashboard.php");
                     exit;
                 } else {

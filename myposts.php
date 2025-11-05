@@ -539,7 +539,7 @@ $totalPages = ceil($collectNumRows / $limit);
                                 <span class="fw-semibold"><?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="<?php echo ($_SESSION['user_role'] === 'admin') ? 'admin-dashboard.php' : 'index.php'; ?>">Dashboard</a></li>
+                                <li><a class="dropdown-item" href="<?php echo ($_SESSION['role_id'] == 2) ? 'admin-dashboard.php' : 'index.php'; ?>">Dashboard</a></li>
                                 <li><a class="dropdown-item" href="homepage.php?logout=1">Logout</a></li>
 
 
@@ -637,7 +637,6 @@ $totalPages = ceil($collectNumRows / $limit);
                                             ?>
                                         </p>
                                         <div class="task-date"><i class="far fa-calendar"></i> <?php echo date('M d, Y', strtotime($task['created_at'])); ?></div>
-
                                         <div class="like-action mt-2">
                                             <?php
                                                 $task_id = $task['id'];

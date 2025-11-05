@@ -1,15 +1,47 @@
 <?php
-session_start();
+// session_start();
 include 'db_connect.php';
 include 'middleware.php';
-checkRole(['user']);
+include 'functions.php';
+checkRole([3]);
 
 $user_id = $_SESSION['user_id'];
+$role_id = $_SESSION['role_id'];
+
+// Check specific permission
+// if (hasPermission('add_task')) {
+// 	echo "Can add task";
+// }
+
+// if (hasPermission('edit_task')) {
+// 	echo "Can edit task";
+// }
+
+// if (hasPermission('delete_task')) {
+// 	echo "Can delete task";
+// }
+
+// // Get all permissions
+// $all_permissions = hasPermission();
+// echo "<pre>";
+// print_r($all_permissions);
+// echo "</pre>";
+// // Output: Array ( [0] => add_task [1] => edit_task [2] => delete_task )
+
+// // Or use getUserPermissions()
+// $permissions_list = hasPermission();
+// foreach ($permissions_list as $perm) {
+// 	echo $perm . "<br>";
+// }
+
+
+
+
 
 // Redirect if not logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit;
+	header("Location: login.php");
+	exit;
 }
 
 // Handle Logout
@@ -22,89 +54,89 @@ if (!isset($_SESSION['user_id'])) {
 
 // for logout 
 if (isset($_POST['logout'])) {
-    session_destroy();
-    header("Location: homepage.php?logout=success");
-    exit;
+	session_destroy();
+	header("Location: homepage.php?logout=success");
+	exit;
 }
 
 
 // Handle Task Delete
 if (isset($_GET['delete_id'])) {
-    $delete_id = intval($_GET['delete_id']);
-    $stmt = $conn->prepare("DELETE FROM tasks WHERE id = ? AND user_id = ?");
-    $stmt->bind_param("ii", $delete_id, $user_id);
-    $stmt->execute();
-    $stmt->close();
-    header("Location: index.php");
-    exit;
+	$delete_id = intval($_GET['delete_id']);
+	$stmt = $conn->prepare("UPDATE tasks SET is_deleted = 1 WHERE id = ? AND user_id = ?");
+	$stmt->bind_param("ii", $delete_id, $user_id);
+	$stmt->execute();
+	$stmt->close();
+	header("Location: index.php");
+	exit;
 }
 
 //  Fetch logged-in user’s name
 $user_name = 'User';
 if ($stmt = $conn->prepare("SELECT name FROM users WHERE id = ? LIMIT 1")) {
-    $stmt->bind_param("i", $user_id);
-    if ($stmt->execute() && $stmt->bind_result($fetched_name) && $stmt->fetch()) {
-        $user_name = $fetched_name;
-    }
-    $stmt->close();
+	$stmt->bind_param("i", $user_id);
+	if ($stmt->execute() && $stmt->bind_result($fetched_name) && $stmt->fetch()) {
+		$user_name = $fetched_name;
+	}
+	$stmt->close();
 }
 
 //  Handle Add Task form submission
 if (isset($_POST['add_task'])) {
-    $task_name = trim($_POST['task_name']);
-    $description = trim($_POST['description']);
-    $image_path = null;
-    $errors = [];
+	$task_name = trim($_POST['task_name']);
+	$description = trim($_POST['description']);
+	$image_path = null;
+	$errors = [];
 
-    // Validation checks
-    if (empty($task_name)) {
-        $errors[] = "Task Name Must!";
-    }
-    if (empty($description)) {
-        $errors[] = "Description Must!";
-    }
+	// Validation checks
+	if (empty($task_name)) {
+		$errors[] = "Task Name Must!";
+	}
+	if (empty($description)) {
+		$errors[] = "Description Must!";
+	}
 
-    if (count($errors) > 0) {
-        echo "<div class='alert alert-danger'><ul>";
-        foreach ($errors as $err) {
-            echo "<li>$err</li>";
-        }
-        echo "</ul></div>";
-    } else {
-        // Image upload
-        $target_dir = "uploads/";
-        if (!is_dir($target_dir)) {
-            mkdir($target_dir, 0777, true);
-        }
-        $image_name = time() . '_' . basename($_FILES["task_image"]["name"]);
-        $target_file = $target_dir . $image_name;
-        if (move_uploaded_file($_FILES["task_image"]["tmp_name"], $target_file)) {
-            $image_path = $target_file;
-        }
+	if (count($errors) > 0) {
+		echo "<div class='alert alert-danger'><ul>";
+		foreach ($errors as $err) {
+			echo "<li>$err</li>";
+		}
+		echo "</ul></div>";
+	} else {
+		// Image upload
+		$target_dir = "uploads/";
+		if (!is_dir($target_dir)) {
+			mkdir($target_dir, 0777, true);
+		}
+		$image_name = time() . '_' . basename($_FILES["task_image"]["name"]);
+		$target_file = $target_dir . $image_name;
+		if (move_uploaded_file($_FILES["task_image"]["tmp_name"], $target_file)) {
+			$image_path = $target_file;
+		}
 
-        $stmt = $conn->prepare("INSERT INTO tasks (user_id, task_name, description, image) VALUES (?, ?, ?, ?)");
-        $stmt->bind_param("isss", $user_id, $task_name, $description, $image_path);
-        $stmt->execute();
-        $stmt->close();
+		$stmt = $conn->prepare("INSERT INTO tasks (user_id, task_name, description, image) VALUES (?, ?, ?, ?)");
+		$stmt->bind_param("isss", $user_id, $task_name, $description, $image_path);
+		$stmt->execute();
+		$stmt->close();
 
-        //  Get admin ID
-        $adminQuery = $conn->query("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
-        $adminRow = $adminQuery->fetch_assoc();
-        $admin_id = $adminRow['id'];
+		//  Get admin ID
+		$adminQuery = $conn->query("SELECT id FROM users WHERE role_id = 2 LIMIT 1");
+		$adminRow = $adminQuery->fetch_assoc();
+		$admin_id = $adminRow['id'];
 
-        // Prepare notification message
-        $notif_message = "New post submitted by " . htmlspecialchars($user_name) . " waiting for approval.";
+		// Prepare notification message
+		$notif_message = "New post submitted by " . htmlspecialchars($user_name) . " waiting for approval.";
 
-        //  Insert notification for admin
-        $stmt_notif = $conn->prepare("INSERT INTO notifications (user_id, message) VALUES (?, ?)");
-        $stmt_notif->bind_param("is", $admin_id, $notif_message);
-        $stmt_notif->execute();
-        $stmt_notif->close();
+		//  Insert notification for admin
+		$stmt_notif = $conn->prepare("INSERT INTO notifications (user_id, message) VALUES (?, ?)");
+		$stmt_notif->bind_param("is", $admin_id, $notif_message);
+		$stmt_notif->execute();
+		$stmt_notif->close();
 
-        // Redirect
-        header("Location: index.php");
-        exit;
-    }
+		// Redirect
+		header("Location: index.php");
+		exit;
+	}
 }
 
 // Pagination setup
@@ -113,7 +145,7 @@ $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $limit;
 
 // Fetch user tasks with pagination
-$tasks_sql = "SELECT * FROM tasks WHERE user_id = $user_id ORDER BY id DESC LIMIT $limit OFFSET $offset";
+$tasks_sql = "SELECT * FROM tasks WHERE user_id = $user_id && is_deleted = 0 ORDER BY id DESC LIMIT $limit OFFSET $offset";
 $tasks_result = mysqli_query($conn, $tasks_sql);
 
 // Total tasks count for pagination
@@ -146,41 +178,41 @@ $totalPages = ceil($totalTasks / $limit);
 
 if (isset($_POST['update_task'])) {
 
-    $edit_id = intval($_POST['edit_id']);
-    $edit_task_name = trim($_POST['edit_task_name']);
-    $edit_description = trim($_POST['edit_description']);
-    $image_path = null;
+	$edit_id = intval($_POST['edit_id']);
+	$edit_task_name = trim($_POST['edit_task_name']);
+	$edit_description = trim($_POST['edit_description']);
+	$image_path = null;
 
-    if (!empty($_FILES["edit_task_image"]["name"])) {
-        echo ("Hello inside");
+	if (!empty($_FILES["edit_task_image"]["name"])) {
+		echo ("Hello inside");
 
-        $target_dir = "uploads/";
-        if (!is_dir($target_dir)) {
-            mkdir($target_dir, 0777, true);
-        }
+		$target_dir = "uploads/";
+		if (!is_dir($target_dir)) {
+			mkdir($target_dir, 0777, true);
+		}
 
-        $image_name = time() . '_' . basename($_FILES["edit_task_image"]["name"]);
-        $image_file = $target_dir . $image_name;
+		$image_name = time() . '_' . basename($_FILES["edit_task_image"]["name"]);
+		$image_file = $target_dir . $image_name;
 
-        if (move_uploaded_file($_FILES["edit_task_image"]["tmp_name"], $image_file)) {
-            $image_path = $image_file;
-            echo ($image_path);
-        }
+		if (move_uploaded_file($_FILES["edit_task_image"]["tmp_name"], $image_file)) {
+			$image_path = $image_file;
+			echo ($image_path);
+		}
 
-        $stmt = $conn->prepare("UPDATE tasks SET task_name = ?, description = ?, image = ? WHERE id = ? AND user_id = ?");
-        $stmt->bind_param("sssii", $edit_task_name, $edit_description, $image_path, $edit_id, $user_id);
-        $stmt->execute();
-        $stmt->close();
-        header("Location: index.php");
-    }
+		$stmt = $conn->prepare("UPDATE tasks SET task_name = ?, description = ?, image = ? WHERE id = ? AND user_id = ?");
+		$stmt->bind_param("sssii", $edit_task_name, $edit_description, $image_path, $edit_id, $user_id);
+		$stmt->execute();
+		$stmt->close();
+		header("Location: index.php");
+	}
 
-    $stmt = $conn->prepare("UPDATE tasks SET task_name = ?, description = ? WHERE id = ? AND user_id = ? ");
-    $stmt->bind_param("ssii", $edit_task_name, $edit_description, $edit_id, $user_id);
+	$stmt = $conn->prepare("UPDATE tasks SET task_name = ?, description = ? WHERE id = ? AND user_id = ? ");
+	$stmt->bind_param("ssii", $edit_task_name, $edit_description, $edit_id, $user_id);
 
-    $stmt->execute();
-    $stmt->close();
-    header("Location: index.php");
-    exit;
+	$stmt->execute();
+	$stmt->close();
+	header("Location: index.php");
+	exit;
 }
 
 $usersStatus = 'SELECT * FROM tasks';
@@ -202,13 +234,73 @@ $notif_stmt->close();
 
 // Mark notification as read (from user dashboard)
 if (isset($_POST['mark_read'])) {
-    $notif_id = intval($_POST['notif_id']);
-    $stmt = $conn->prepare("UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?");
-    $stmt->bind_param("ii", $notif_id, $user_id);
-    $stmt->execute();
-    $stmt->close();
-    header("Location: index.php");
-    exit;
+	$notif_id = intval($_POST['notif_id']);
+	$stmt = $conn->prepare("UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?");
+	$stmt->bind_param("ii", $notif_id, $user_id);
+	$stmt->execute();
+	$stmt->close();
+	header("Location: index.php");
+	exit;
+
+	// for permission check
+
+
+
+
+
+	$permissions_sql = "
+    SELECT rp.role_id, rp.permission_id, p.name AS permission_name
+    FROM role_permissions rp
+    JOIN permissions p ON rp.permission_id = p.id
+    WHERE rp.role_id = $role_id
+";
+
+	$permissionsResult = mysqli_query($conn, $permissions_sql);
+
+	if (mysqli_num_rows($permissionsResult) > 0) {
+		echo "Permissions for role_id = $role_id:<br>";
+		while ($row = mysqli_fetch_assoc($permissionsResult)) {
+			echo $row['permission_name'] . "<br>";
+		}
+	} else {
+		echo "No permissions found for this role_id = $role_id";
+	}
+
+	$permissions_sql = "
+    SELECT rp.role_id, rp.permission_id, p.name AS permission_name
+    FROM role_permissions rp
+    JOIN permissions p ON rp.permission_id = p.id
+    WHERE rp.role_id = $role_id
+";
+
+	$permissionsResult = mysqli_query($conn, $permissions_sql);
+
+	if (mysqli_num_rows($permissionsResult) > 0) {
+		echo "Permissions for role_id = $role_id:<br>";
+		while ($row = mysqli_fetch_assoc($permissionsResult)) {
+			echo "<script>alert('Error rejecting task: " . mysqli_error($conn) . "');</script>";
+			echo $row['permission_name'] . "<br>";
+		}
+	} else {
+		echo "No permissions found for this role_id = $role_id";
+	}
+
+	// if (!$permissionsResult) {
+	//     echo "Query Error: " . mysqli_error($conn);
+	// } else {
+	//     if (mysqli_num_rows($permissionsResult) == 0) {
+	//         echo "No permissions found for this role_id = $role_id";
+	//     } else {
+	//         while ($row = mysqli_fetch_assoc($permissionsResult)) {
+	//             echo $row['permission_name'] . "<br>";
+	//         }
+	//     }
+	// }
+
+
+
+
+
 }
 
 
@@ -300,6 +392,7 @@ if (isset($_POST['mark_read'])) {
 			position: relative;
 			display: inline-block;
 		}
+
 		.action-dropdown-toggle {
 			background: transparent;
 			border: none;
@@ -308,9 +401,11 @@ if (isset($_POST['mark_read'])) {
 			padding: 4px 8px;
 			color: #555;
 		}
+
 		.action-dropdown-toggle:hover {
 			color: #000;
 		}
+
 		.action-dropdown-menu {
 			display: none;
 			position: absolute;
@@ -319,14 +414,16 @@ if (isset($_POST['mark_read'])) {
 			background: #fff;
 			border: 1px solid #ddd;
 			border-radius: 6px;
-			box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 			min-width: 160px;
 			z-index: 100;
 			overflow: hidden;
 		}
+
 		.action-dropdown-menu.show {
 			display: block;
 		}
+
 		.action-dropdown-menu a,
 		.action-dropdown-menu button {
 			display: block;
@@ -340,13 +437,16 @@ if (isset($_POST['mark_read'])) {
 			cursor: pointer;
 			transition: background 0.2s;
 		}
+
 		.action-dropdown-menu a:hover,
 		.action-dropdown-menu button:hover {
 			background: #f5f5f5;
 		}
+
 		.action-dropdown-menu .text-danger:hover {
 			background: #fee;
 		}
+
 		.action-dropdown-menu .text-info:hover {
 			background: #e7f3ff;
 		}
@@ -479,9 +579,9 @@ if (isset($_POST['mark_read'])) {
 					<table class="table table-hover mb-0">
 						<thead>
 							<tr>
-								<th> ID</th>
+								<th>ID</th>
 								<th>Post Title</th>
-                                <th>Image</th>
+								<th>Image</th>
 								<th>Created At</th>
 								<th>Status</th>
 								<th class="text-center">Actions</th>
@@ -490,8 +590,8 @@ if (isset($_POST['mark_read'])) {
 						<tbody>
 							<?php while ($task = mysqli_fetch_assoc($tasks_result)): ?>
 								<tr>
-                                    <td><?php echo htmlspecialchars($task['id']); ?></td>
-                                    <td><?php echo htmlspecialchars($task['task_name']); ?></td>
+									<td><?php echo htmlspecialchars($task['id']); ?></td>
+									<td><?php echo htmlspecialchars($task['task_name']); ?></td>
 									<td>
 										<?php if (!empty($task['image'])): ?>
 											<img src="<?php echo htmlspecialchars($task['image']); ?>" alt="Task Image" style="width:60px; height:60px; object-fit:cover;">
@@ -499,10 +599,11 @@ if (isset($_POST['mark_read'])) {
 											<span class="text-muted">No Image</span>
 										<?php endif; ?>
 									</td>
-									
-									<td><?php echo date('Y-m-d', strtotime($task['created_at'])); ?></td>
 
-									
+									<td><?php echo date('Y-m-d h:i A', strtotime($task['created_at'])); ?></td>
+
+
+
 
 									<td>
 										<?php if ($task['status'] == 'approved'): ?>
@@ -515,21 +616,32 @@ if (isset($_POST['mark_read'])) {
 											<span class="badge bg-warning text-dark">Pending</span>
 										<?php endif; ?>
 									</td>
-                                    <td class="text-center">
+									<td class="text-center">
 										<div class="action-dropdown">
 											<button class="action-dropdown-toggle" onclick="toggleActionMenu(event, this)" aria-label="Actions">
 												....
 											</button>
 											<div class="action-dropdown-menu">
+												<?php if (hasPermission('view-details')): ?>
 												<button type="button" class="text-info" data-bs-toggle="modal" data-bs-target="#viewDescModal" data-name="<?php echo htmlspecialchars($task['task_name'], ENT_QUOTES, 'UTF-8'); ?>" data-desc="<?php echo htmlspecialchars($task['description'], ENT_QUOTES, 'UTF-8'); ?>" data-created="<?php echo date('M d, Y', strtotime($task['created_at'])); ?>">
 													<i class="fas fa-eye me-2"></i>View Description
 												</button>
+												<?php endif; ?>
+												<?php if (hasPermission('edit_task')): ?>
 												<button type="button" class="text-warning" data-bs-toggle="modal" data-bs-target="#editTaskModal" data-id="<?php echo $task['id']; ?>" data-name="<?php echo htmlspecialchars($task['task_name'], ENT_QUOTES, 'UTF-8'); ?>" data-desc="<?php echo htmlspecialchars($task['description'], ENT_QUOTES, 'UTF-8'); ?>">
 													<i class="fas fa-edit me-2"></i>Edit
 												</button>
-												<a href="index.php?delete_id=<?php echo $task['id']; ?>" class="text-danger" onclick="return confirm('Delete this task?')">
-													<i class="fas fa-trash-alt me-2"></i>Delete
-												</a>
+												<?php endif; ?>
+												
+
+												<?php if (hasPermission('delete_task')): ?>
+													<a href="index.php?delete_id=<?php echo $task['id']; ?>" class="text-danger" onclick="return confirm('Delete this task?')">
+														<i class="fas fa-trash-alt me-2"></i>Delete
+													</a>
+												<?php endif; ?>
+
+
+
 											</div>
 										</div>
 									</td>
@@ -550,7 +662,7 @@ if (isset($_POST['mark_read'])) {
 									<i class="fas fa-chevron-left"></i>
 								</a>
 							</li>
-							
+
 
 							<!-- Page Numbers -->
 							<?php for ($i = 1; $i <= $totalPages; $i++): ?>
@@ -595,8 +707,10 @@ if (isset($_POST['mark_read'])) {
 			<form method="POST" action="" enctype="multipart/form-data">
 				<div class="modal-content">
 					<div class="modal-header">
+						<?php if (hasPermission('add_task')): ?>
 						<h5 class="modal-title" id="addTaskModalLabel">Add New Task</h5>
 						<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+						<?php endif; ?>
 					</div>
 					<div class="modal-body">
 						<div class="mb-3">

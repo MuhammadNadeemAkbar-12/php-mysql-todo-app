@@ -810,23 +810,27 @@ $totalPages = ceil($collectNumRows / $limit);
                                 <span class="fw-semibold"><?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
                             </a>
                             <!-- <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="<?php echo ($_SESSION['user_role'] === 'admin') ? 'admin-dashboard.php' : 'index.php'; ?>">Dashboard</a></li>
+                                <li><a class="dropdown-item" href="<?php echo ($_SESSION['role_id'] == 2) ? 'admin-dashboard.php' : 'index.php'; ?>">Dashboard</a></li>
                                 <li><a class="dropdown-item" href="homepage.php?logout=1">Logout</a></li>
                             </ul> -->
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li>
-                                    <a class="dropdown-item" href="
-            <?php
-                        if ($_SESSION['user_role'] === 'superadmin') {
-                            echo 'superadmin.php';
-                        } elseif ($_SESSION['user_role'] === 'admin') {
-                            echo 'admin-dashboard.php';
-                        } else {
-                            echo 'index.php';
-                        }
-            ?>">
+                                    <a class="dropdown-item" href="<?php
+                                                                    if ($_SESSION['role_id'] == 1) {
+
+                                                                        echo 'superadmin.php';
+                                                                    } elseif ($_SESSION['role_id'] == 2) {
+                                                                        echo 'admin-dashboard.php';
+                                                                    }elseif ($_SESSION['role_id'] == 3) {
+                                                                        echo 'index.php';
+                                                                    } 
+                                                                    else {
+                                                                        echo 'homepage.php';
+                                                                    }
+                                                                    ?>">
                                         Dashboard
                                     </a>
+
                                 </li>
                                 <li><a class="dropdown-item" href="homepage.php?logout=1">Logout</a></li>
                             </ul>

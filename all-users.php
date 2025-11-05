@@ -2,7 +2,7 @@
 session_start();
 include 'db_connect.php';
 include 'middleware.php';
-checkRole(['admin']);
+checkRole([2]);
 
 // Redirect if not logged in
 if (!isset($_SESSION['user_id'])) {
@@ -185,7 +185,7 @@ $user_name = $_SESSION['user_name'] ?? 'Admin';
                                         <?php echo htmlspecialchars($user['email']); ?>
                                     </td>
                                     <td>
-                                        <?php if ($user['role'] === 'admin'): ?>
+                                        <?php if ($user['role_id'] === 2): ?>
                                             <span class="badge bg-danger">
                                                 <i class="fas fa-shield-alt me-1"></i>Admin
                                             </span>
