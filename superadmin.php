@@ -181,8 +181,8 @@ $user_offset = ($current_user_page - 1) * $users_per_page;
 
 // Count total pending users
 $countPendingUsersQuery = "SELECT COUNT(*) AS total FROM tasks t 
-    JOIN users u ON t.user_id = u.id 
-    WHERE t.status = 'pending'";
+JOIN users u ON t.user_id = u.id 
+WHERE t.status = 'pending'";
 $countPendingResult = mysqli_query($conn, $countPendingUsersQuery);
 $totalPendingUsers = mysqli_fetch_assoc($countPendingResult)['total'];
 $total_user_pages = ceil($totalPendingUsers / $users_per_page);
@@ -351,11 +351,11 @@ $notificationsListResult = mysqli_query($conn, $notificationsListQuery);
 // for all users 
 // Pagination setup
 $limit = 3;
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$offset = ($page - 1) * $limit;
+$allusers_page = isset($_GET['allusers_page']) ? (int)$_GET['allusers_page'] : 1;
+$allusers_offset = ($allusers_page - 1) * $limit;
 
 // Fetch all users with pagination
-$allusers_query = "SELECT * FROM users ORDER BY created_at DESC LIMIT $limit OFFSET $offset";
+$allusers_query = "SELECT * FROM users ORDER BY created_at DESC LIMIT $limit OFFSET $allusers_offset";
 $allusers_result = mysqli_query($conn, $allusers_query);
 
 // Total users count
@@ -363,7 +363,9 @@ $countQuery = "SELECT COUNT(*) as total FROM users";
 $countResult = mysqli_query($conn, $countQuery);
 $countRow = mysqli_fetch_assoc($countResult);
 $totalUsers = $countRow['total'];
-$totalPages = ceil($totalUsers / $limit);
+$totalUsersPages = ceil($totalUsers / $limit);
+
+$user_id = $_SESSION['user_id'];
 
 // mark as read toggleNotifications
 if (isset($_POST['mark_read'])) {
@@ -1297,15 +1299,9 @@ if (isset($_POST['mark_read'])) {
                                                 </div>
                                             </form>
                                         </div>
-
-
-
                                     </div>
                                 </div>
                             </div>
-
-
-
                         </div>
 
                         <!-- for admins  -->
@@ -1331,16 +1327,13 @@ if (isset($_POST['mark_read'])) {
                                                 $name = $admin['name'] ?? '';
                                                 $email = $admin['email'] ?? '';
                                                 // $role = $admin['role'] ?? '';
-
-
-
-
                                                 // Generate initials (first 2 words)
                                                 $words = explode(' ', trim($name));
                                                 if (count($words) >= 2) {
                                                     $initials = strtoupper(substr($words[0], 0, 1) . substr($words[1], 0, 1));
                                                 } else {
                                                     $initials = strtoupper(substr($name, 0, 2));
+                                                    //  echo "<script>alert('$words');</script>";
                                                 }
 
                                                 // Avatar color
@@ -1580,15 +1573,15 @@ if (isset($_POST['mark_read'])) {
                                 </div>
 
                                 <!-- Pagination -->
-                                <?php if ($totalPages > 1): ?>
+                                <?php if ($totalUsersPages > 1): ?>
                                     <div class="panel__body border-top">
                                         <nav aria-label="Users pagination">
                                             <ul class="pagination pagination-sm justify-content-center mb-0 gap-1">
                                                 <!-- Previous Button -->
-                                                <?php if ($page > 1): ?>
+                                                <?php if ($allusers_page > 1): ?>
                                                     <li class="page-item">
                                                         <a class="page-link rounded-pill"
-                                                            href="?page=<?php echo $page - 1; ?>#all-users">
+                                                            href="?allusers_page=<?php echo $allusers_page - 1; ?>#all-users">
                                                             Previous
                                                         </a>
                                                     </li>
@@ -1598,21 +1591,57 @@ if (isset($_POST['mark_read'])) {
                                                     </li>
                                                 <?php endif; ?>
 
+                                                <?php
+                                                // Show max 5 page numbers
+                                                $max_pages_to_show = 5;
+                                                $start_page = max(1, $allusers_page - 2);
+                                                $end_page = min($totalUsersPages, $start_page + $max_pages_to_show - 1);
+
+                                                // Adjust start if we're near the end
+                                                if ($end_page - $start_page < $max_pages_to_show - 1) {
+                                                    $start_page = max(1, $end_page - $max_pages_to_show + 1);
+                                                }
+
+                                                // Show first page + ellipsis if needed
+                                                if ($start_page > 1): ?>
+                                                    <li class="page-item">
+                                                        <a class="page-link rounded-pill" href="?allusers_page=1#all-users">1</a>
+                                                    </li>
+                                                    <?php if ($start_page > 2): ?>
+                                                        <li class="page-item disabled">
+                                                            <span class="page-link rounded-pill">...</span>
+                                                        </li>
+                                                    <?php endif; ?>
+                                                <?php endif; ?>
+
                                                 <!-- Page Numbers -->
-                                                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                                                    <li class="page-item <?php echo ($i == $page) ? 'active' : ''; ?>">
+                                                <?php for ($i = $start_page; $i <= $end_page; $i++): ?>
+                                                    <li class="page-item <?php echo ($i == $allusers_page) ? 'active' : ''; ?>">
                                                         <a class="page-link rounded-pill"
-                                                            href="?page=<?php echo $i; ?>#all-users">
+                                                            href="?allusers_page=<?php echo $i; ?>#all-users">
                                                             <?php echo $i; ?>
                                                         </a>
                                                     </li>
                                                 <?php endfor; ?>
 
+                                                <?php
+                                                // Show ellipsis + last page if needed
+                                                if ($end_page < $totalUsersPages): ?>
+                                                    <?php if ($end_page < $totalUsersPages - 1): ?>
+                                                        <li class="page-item disabled">
+                                                            <span class="page-link rounded-pill">...</span>
+                                                        </li>
+                                                    <?php endif; ?>
+                                                    <li class="page-item">
+                                                        <a class="page-link rounded-pill" href="?allusers_page=<?php echo $totalUsersPages; ?>#all-users"><?php echo $totalUsersPages; ?></a>
+                                                    </li>
+                                                <?php endif; ?>
+
                                                 <!-- Next Button -->
-                                                <?php if ($page < $totalPages): ?>
+                                                <?php if ($allusers_page < $totalUsersPages): ?>
                                                     <li class="page-item">
                                                         <a class="page-link rounded-pill"
-                                                            href="?page=<?php echo $page + 1; ?>#all-users">
+                                                            href="?allusers_page=<?php echo $allusers_page + 1; ?>#all-users">
                                                             Next
                                                         </a>
                                                     </li>
@@ -1626,8 +1655,8 @@ if (isset($_POST['mark_read'])) {
 
                                         <!-- Pagination Info -->
                                         <p class="text-muted small mb-0 mt-2 text-center">
-                                            Showing <?php echo min($offset + 1, $totalUsers); ?>
-                                            to <?php echo min($offset + $limit, $totalUsers); ?>
+                                            Showing <?php echo min($allusers_offset + 1, $totalUsers); ?>
+                                            to <?php echo min($allusers_offset + $limit, $totalUsers); ?>
                                             of <?php echo $totalUsers; ?> users
                                         </p>
                                     </div>
@@ -1847,11 +1876,13 @@ if (isset($_POST['mark_read'])) {
                                                                 <button type="button" class="btn btn-secondary btn-pill" data-bs-dismiss="modal">
                                                                     <i class="bi bi-x-circle me-2"></i>Close
                                                                 </button>
+                                                                <?php if (hasPermission('delete_task')): ?>
                                                                 <a href="superadmin.php?delete_id=<?php echo $post['task_id']; ?>"
                                                                     class="btn btn-danger btn-pill"
                                                                     onclick="return confirm('Are you sure you want to delete this task?')">
                                                                     <i class="bi bi-trash me-2"></i>Delete Task
                                                                 </a>
+                                                                <?php endif; ?>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1966,7 +1997,7 @@ if (isset($_POST['mark_read'])) {
                                             <p class="mb-0 text-muted small">Track critical actions across the platform.</p>
                                         </div>
                                     </div>
-                                    <a href="<!-- /admin/logs.php -->" class="btn btn-outline-secondary btn-pill btn-sm">View all logs</a>
+                                    <a href="" class="btn btn-outline-secondary btn-pill btn-sm">View all logs</a>
                                 </div>
                                 <div class="panel__body p-0">
                                     <div class="table-responsive">
@@ -2007,7 +2038,7 @@ if (isset($_POST['mark_read'])) {
                                     </div>
                                 </div>
                                 <div class="panel__body">
-                                    <a href="<!-- /admin/logs/download.php -->" class="btn btn-outline-primary btn-pill btn-sm">
+                                    <a href="" class="btn btn-outline-primary btn-pill btn-sm">
                                         <i class="bi bi-download me-2"></i>Download latest log
                                     </a>
                                 </div>
@@ -2039,14 +2070,14 @@ if (isset($_POST['mark_read'])) {
                                             <i class="bi bi-check-circle-fill"></i>
                                         </span>
                                     </div>
-                                    <form method="post" action="<!-- /admin/create_backup.php -->" class="d-grid gap-2">
+                                    <form method="post" action="" class="d-grid gap-2">
                                         <!-- <?php // echo $csrf_token; 
                                                 ?> -->
                                         <button type="submit" class="btn btn-primary btn-pill">
                                             <i class="bi bi-cloud-arrow-up me-2"></i>Create backup
                                         </button>
                                     </form>
-                                    <a href="<!-- /admin/download_backup.php -->" class="btn btn-outline-secondary btn-pill w-100 mt-3">
+                                    <a href="" class="btn btn-outline-secondary btn-pill w-100 mt-3">
                                         <i class="bi bi-download me-2"></i>Download latest
                                     </a>
                                 </div>

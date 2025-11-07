@@ -1,6 +1,7 @@
 <?php
 session_start();
 include 'db_connect.php';
+include 'functions.php';
 
 $currentPage = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
 
@@ -211,8 +212,15 @@ $totalPages = ceil($collectNumRows / $limit);
         }
 
         @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-20px);
+            }
         }
 
         .btn-cta {
@@ -409,8 +417,15 @@ $totalPages = ceil($collectNumRows / $limit);
         }
 
         @keyframes bounceHorizontal {
-            0%, 100% { transform: translateX(0); }
-            50% { transform: translateX(5px); }
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            50% {
+                transform: translateX(5px);
+            }
         }
 
         /* Pagination */
@@ -491,6 +506,7 @@ $totalPages = ceil($collectNumRows / $limit);
                 opacity: 0;
                 transform: translateY(30px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -502,6 +518,7 @@ $totalPages = ceil($collectNumRows / $limit);
             .hero-section h1 {
                 font-size: 2.5rem;
             }
+
             .section-title {
                 font-size: 2rem;
             }
@@ -531,11 +548,11 @@ $totalPages = ceil($collectNumRows / $limit);
                     <li class="nav-item">
                         <a class="nav-link" href="#about">About</a>
                     </li>
-                    
+
                     <?php if (isset($_SESSION['user_id'])): ?>
                         <li class="nav-item dropdown user-menu">
                             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
-                               
+
                                 <span class="fw-semibold"><?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
@@ -544,7 +561,7 @@ $totalPages = ceil($collectNumRows / $limit);
 
 
 
-                                
+
                             </ul>
                         </li>
                     <?php else: ?>
@@ -630,20 +647,20 @@ $totalPages = ceil($collectNumRows / $limit);
                                     <div class="task-body">
                                         <h5><?php echo htmlspecialchars($task['task_name']); ?></h5>
                                         <p class="task-description">
-                                            <?php 
-                                                $description = htmlspecialchars($task['description']);
-                                                $words = explode(' ', $description);
-                                                echo (count($words) > 30) ? implode(' ', array_slice($words, 0, 30)) . '...' : $description;
+                                            <?php
+                                            $description = htmlspecialchars($task['description']);
+                                            $words = explode(' ', $description);
+                                            echo (count($words) > 30) ? implode(' ', array_slice($words, 0, 30)) . '...' : $description;
                                             ?>
                                         </p>
                                         <div class="task-date"><i class="far fa-calendar"></i> <?php echo date('M d, Y', strtotime($task['created_at'])); ?></div>
                                         <div class="like-action mt-2">
                                             <?php
-                                                $task_id = $task['id'];
-                                                $countQuery = "SELECT COUNT(*) AS total_likes FROM likes WHERE task_id = $task_id";
-                                                $countResult = mysqli_query($conn, $countQuery);
-                                                $countRow = mysqli_fetch_assoc($countResult);
-                                                $totalLikes = $countRow['total_likes'];
+                                            $task_id = $task['id'];
+                                            $countQuery = "SELECT COUNT(*) AS total_likes FROM likes WHERE task_id = $task_id";
+                                            $countResult = mysqli_query($conn, $countQuery);
+                                            $countRow = mysqli_fetch_assoc($countResult);
+                                            $totalLikes = $countRow['total_likes'];
                                             ?>
                                             <button type="button" class="btn btn-like" data-task-id="<?php echo $task['id']; ?>">
                                                 <i class="fa-regular fa-heart"></i>
@@ -688,9 +705,12 @@ $totalPages = ceil($collectNumRows / $limit);
                 </div>
                 <h2 class="section-title mt-4">No Approved Posts Yet</h2>
                 <p class="section-subtitle">Create your first post and get it approved to see it here!</p>
-                <a href="index.php" class="btn btn-primary btn-lg">
-                    <i class="fas fa-plus-circle me-2"></i>Create Post
-                </a>
+                 <?php if (hasPermission('add_task')): ?>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+                    <i class="fas fa-plus me-2"></i>Create Task
+                </button>
+                <?php endif; ?>
+
             </div>
         </section>
     <?php endif; ?>
