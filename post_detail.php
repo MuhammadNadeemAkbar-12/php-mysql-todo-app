@@ -51,8 +51,8 @@ if (isset($_POST['add_comment']) && isset($_SESSION['user_id'])) {
         header("Location: post_detail.php?id=$postId");
            exit();
        // Page reload to show new comment
-       //     header("Location: " . $_SERVER['PHP_SELF']);
-       //     exit();
+       // header("Location: " . $_SERVER['PHP_SELF']);
+       // exit();
 }
 
 
