@@ -96,12 +96,11 @@ include 'db_connect.php';
       <form action="#" method="POST">
         <div class="mb-3">
           <label class="form-label">Select User</label>
-          <!-- Tum yahan users ko MySQL se dropdown me laoge -->
+
           <select name="user_id" class="form-select" required>
             <option value="">-- Select User --</option>
             <option value="1">Ali</option>
             <option value="2">Sara</option>
-            <!-- PHP se loop chalayoge yahan -->
           </select>
         </div>
         <div class="mb-3">
@@ -133,7 +132,6 @@ include 'db_connect.php';
           </tr>
         </thead>
         <tbody>
-          <!-- Tum yahan PHP se posts list show karoge -->
           <tr>
             <td>1</td>
             <td>My First Post</td>

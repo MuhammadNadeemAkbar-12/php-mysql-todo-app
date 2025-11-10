@@ -96,6 +96,43 @@ $conn->close();
 ?>
 
 
+   <!-- for likes  -->
+                                        <div class="like-action mt-2">
+                                            <?php
+                                            $task_id = $task['id'];
+                                          
+                                            $countQuery = "SELECT COUNT(*) AS total_likes FROM likes WHERE task_id = $task_id";
+                                            $countResult = mysqli_query($conn, $countQuery);
+                                            $countRow = mysqli_fetch_assoc($countResult);
+                                            $totalLikes = $countRow['total_likes'];
+                                            ?>
 
+                                            <button type="button"
+                                                class="btn btn-like"
+                                                data-task-id="<?php echo $task['id']; ?>">
+                                                <i class="fa-regular fa-heart"></i>
+                                                <span> Like</span>
+                                            </button>
+                                            <span class="like-count">
+                                                <?php echo $totalLikes; ?> Likes
+                                            </span>
+                                        </div>
+
+
+                                        <!-- my posts like   -->
+<div class="like-action mt-2">
+                                            <?php
+                                            $task_id = $task['id'];
+                                            $countQuery = "SELECT COUNT(*) AS total_likes FROM likes WHERE task_id = $task_id";
+                                            $countResult = mysqli_query($conn, $countQuery);
+                                            $countRow = mysqli_fetch_assoc($countResult);
+                                            $totalLikes = $countRow['total_likes'];
+                                            ?>
+                                            <button type="button" class="btn btn-like" data-task-id="<?php echo $task['id']; ?>">
+                                                <i class="fa-regular fa-heart"></i>
+                                                <span>Like</span>
+                                            </button>
+                                            <span class="like-count"><?php echo $totalLikes; ?> Likes</span>
+                                        </div>
 
 ?>
