@@ -1,5 +1,5 @@
 <?php
-session_start();
+// session_start();
 include 'db_connect.php';
 include 'functions.php';
 
@@ -654,20 +654,7 @@ $totalPages = ceil($collectNumRows / $limit);
                                             ?>
                                         </p>
                                         <div class="task-date"><i class="far fa-calendar"></i> <?php echo date('M d, Y', strtotime($task['created_at'])); ?></div>
-                                        <div class="like-action mt-2">
-                                            <?php
-                                            $task_id = $task['id'];
-                                            $countQuery = "SELECT COUNT(*) AS total_likes FROM likes WHERE task_id = $task_id";
-                                            $countResult = mysqli_query($conn, $countQuery);
-                                            $countRow = mysqli_fetch_assoc($countResult);
-                                            $totalLikes = $countRow['total_likes'];
-                                            ?>
-                                            <button type="button" class="btn btn-like" data-task-id="<?php echo $task['id']; ?>">
-                                                <i class="fa-regular fa-heart"></i>
-                                                <span>Like</span>
-                                            </button>
-                                            <span class="like-count"><?php echo $totalLikes; ?> Likes</span>
-                                        </div>
+                                      
                                     </div>
 
                                     <div class="card-cta">

@@ -5,7 +5,6 @@ include 'db_connect.php';
 $currentPage = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
 
 
-
 $limit = 6;
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $limit;
@@ -23,7 +22,7 @@ if (isset($_POST['filter_button'])) {
     $filter_data = $_POST['filter_input'];
 }
 
-// Query build
+// Query build  
 if (!empty($filter_data)) {
     $approvedQuery = "SELECT * FROM tasks WHERE status = 'approved' AND CONCAT(task_name, description) LIKE '%$filter_data%' LIMIT $limit OFFSET $offset";
     $countQuery = "SELECT COUNT(*) as total FROM tasks WHERE status = 'approved' AND CONCAT(task_name, description) LIKE '%$filter_data%'";
@@ -944,26 +943,7 @@ $totalPages = ceil($collectNumRows / $limit);
                                         <div class="task-date"><i class="far fa-calendar"></i> <?php echo htmlspecialchars($task['created_at']); ?></div>
 
                                         <!-- for likes  -->
-                                        <div class="like-action mt-2">
-                                            <?php
-                                            $task_id = $task['id'];
-                                            // Get total comments count for this task
-                                            $countQuery = "SELECT COUNT(*) AS total_likes FROM likes WHERE task_id = $task_id";
-                                            $countResult = mysqli_query($conn, $countQuery);
-                                            $countRow = mysqli_fetch_assoc($countResult);
-                                            $totalLikes = $countRow['total_likes'];
-                                            ?>
-
-                                            <button type="button"
-                                                class="btn btn-like"
-                                                data-task-id="<?php echo $task['id']; ?>">
-                                                <i class="fa-regular fa-heart"></i>
-                                                <span> Like</span>
-                                            </button>
-                                            <span class="like-count">
-                                                <?php echo $totalLikes; ?> Likes
-                                            </span>
-                                        </div>
+                                     
 
                                         <!-- Comments Section -->
 
