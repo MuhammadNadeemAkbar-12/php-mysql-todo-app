@@ -1,0 +1,32 @@
+# PHP
+*.log
+*.cache
+
+# Database
+*.sql
+db_connect.php
+
+# Uploads (optional - अगर images upload नहीं करनी हैं)
+uploads/*
+!uploads/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.bak
+*.old
+
+# Environment files
+.env
+config.php
